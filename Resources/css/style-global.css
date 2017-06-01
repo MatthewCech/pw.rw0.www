@@ -1,4 +1,26 @@
-.p 
+/*.p 
 {
   font-family: 'Oxygen', sans-serif;
+}*/
+
+
+html, body {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+}
+
+.rw-bg {
+	background-image: url("/resources/assets/gplaypattern_2X.png");
+}
+
+.rw-text {
+	color: #6B5C9E;
+}
+.rw-text a{
+	color: #6B5C9E;
+}
+.rw-text a:hover{
+	color: #9777CC;
+	text-decoration: none;
 }
