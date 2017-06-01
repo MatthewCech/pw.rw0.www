@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script type="text/javascript" src="js/phaser.min.js"></script>
+        <title>Boilerplate</title>
+    </head>
+    <body>
+        <script>
+          //////////////////
+         // Phaser Setup //
+        //////////////////
+        // Get game object and add levels
+        var game = new Phaser.Game(800, 600, Phaser.AUTO, ''); // Initialize the phaser window
+        game.state.add('level_main', new level(game));         // Add your levels like this.
+        game.state.start('level_main');                        // Dictates starting "Level".
+
+          ///////////////////
+         // Create Levels //
+        ///////////////////
+        // Main level
+        class Level1 extends Phaser.State {
+            // ===== Phaser Functions ===== //
+            // First call for constructor.
+            constructor(game){
+              super(game); 
+            }
+
+            // Configuration goes here. This is called first after construction.
+            preload() {
+            }
+              
+            // Put things to be regularly initialized once here. 
+            create() {
+              this.init(); // Should be called last.
+            }
+              
+            // Called once per loop.
+            update() {
+              this.draw(); // Should be called last.
+            }
+
+            // ===== Recommended Functions ===== //
+            // Initialization (and by extention re-initialization or restart code here.)
+            init() {
+            }
+            
+            // Draw code here!
+            draw() {
+            }
+        }
+        </script>
+    </body>
+</html>
