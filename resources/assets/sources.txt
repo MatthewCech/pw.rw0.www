@@ -1,2 +1,6 @@
 beach.jpg - public domain, https://pixabay.com/en/beach-dawn-dusk-ocean-sea-1867285/
 gplaypattern_2X.pmng - Subtlepatterns.com
+wisp.png - rw
+code.png - fontawesome
+download.png - fontawesome
+gamepad.png - fontawesome

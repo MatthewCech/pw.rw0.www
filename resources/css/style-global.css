@@ -101,6 +101,7 @@ p {
 	overflow: hidden;
 	padding-left: 10px;
 	height: 100px; 
+
 	/*border: 1px solid red;*/
 
 }
@@ -109,7 +110,7 @@ p {
 	position: relative;
 	overflow: hidden;
 	width: 10px;
-	height: 510px; 
+	height: 375px; 
 
 	/*border: 1px solid blue;*/
 }
@@ -173,7 +174,7 @@ p {
 	width: 10px;
 	height: 200px;
 	background-color: rgba(0, 0, 0, 0.3);
-	animation: slidet .75s forwards;
+	animation: slidet .85s forwards;
 	animation-delay: 0s;
   animation-timing-function: ease-in-out;
 
