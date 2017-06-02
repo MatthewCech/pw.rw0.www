@@ -24,25 +24,48 @@
         ///////////////////
         // Main level
         class Level1 extends Phaser.State {
+            // Variables
+
             // ===== Phaser Functions ===== //
             // First call for constructor.
-            constructor(game){
-              super(game); 
+            constructor(game){ super(game); 
+
+                // Actual ctor content here.
+                this.weh_emitter = null;
             }
 
             // Configuration goes here. This is called first after construction.
             preload() {
+                game.load.image('weh', 'resources/assets/sprites/weh.png');
             }
               
             // Put things to be regularly initialized once here. 
             create() {
-              game.stage.backgroundColor = "#BBBBBF";
-              this.init(); // Should be called last.
+                game.stage.backgroundColor = "#BBBBBF";
+
+                // emitter setup
+                game.physics.startSystem(Phaser.Physics.ARCADE);
+                this.weh_emitter = game.add.emitter(0, 0, 250);
+                this.weh_emitter.makeParticles('weh');
+                this.weh_emitter.gravity = 200;
+                this.weh_emitter.setAlpha(1, 0, 2000);
+
+                // Link up
+                game.input.onDown.add(this.emit, this);
+
+                // Should be called last.
+                this.init();
             }
-              
+            
+            emit(mouse_ptr){
+                this.weh_emitter.x = mouse_ptr.x;
+                this.weh_emitter.y = mouse_ptr.y;
+                this.weh_emitter.start(true, 2000, null, Math.floor(Math.random() * 10) + 5);
+            }
+
             // Called once per loop.
             update() {
-              this.draw(); // Should be called last.
+                this.draw(); // Should be called last.
             }
 
             // ===== Recommended Functions ===== //
@@ -59,9 +82,9 @@
          // Phaser Setup //
         //////////////////
         // Get game object and add levels. Note: This must come last.
-        var game = new Phaser.Game(screen.width, 600, Phaser.AUTO, '');  // Initialize the phaser window
-        game.state.add('level_main', new Level1(game));         // Add your levels like this.
-        game.state.start('level_main');                         // Dictates starting "Level".
+        var game = new Phaser.Game(screen.width, screen.height, Phaser.AUTO, '');  // Initialize the phaser window
+        game.state.add('level_main', new Level1(game));                            // Add your levels like this.
+        game.state.start('level_main');                                            // Dictates starting "Level".
 
         </script>
     </body>
