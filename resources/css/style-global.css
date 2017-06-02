@@ -123,6 +123,7 @@ p {
 	margin: auto;
 }
 .rw-overflow-inner {
+	margin-left: -10px;
 }
 
 
