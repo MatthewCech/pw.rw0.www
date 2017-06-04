@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+
+
+<canvas id="rwcanvas" width="640" height="480"> Your browser does not support the HTML5 canvas tag.</canvas>
+
+
+
+<style type="text/css">
+#rwcanvas {
+	position: absolute;
+	margin: 0;
+	padding: 0;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+</style>
+
+
+
+<script>
+var canvas = document.getElementById('rwcanvas');
+var ctx = canvas.getContext("2d");
+
+function make2DArr(d1, d2) {
+	let arr = new Array(d1);
+
+	for(let i = 0; i < d1; ++i)
+		arr[i] = [d2];
+
+	return arr;
+}
+
+function lookup(name) {
+	if(name == "water")
+		return "#7799AA";
+	if(name == "land")
+		return "#448877";
+
+	return "#00FF00";
+}
+
+
+function c_loop(callback) {
+	for(let i = 0; i < blocks_horizontal; ++i)
+		for(let j = 0; j < blocks_vertical; ++j)
+			callback(i ,j);
+}	
+
+function c_fill(name) {
+	c_loop( (i, j) => {
+		data[i][j] = name;
+	});
+}
+
+function util_rand(total, correct, callback) {
+	if(Math.floor((Math.random() * total)) < correct)
+		callback();
+} 
+
+function c_addNoise(name, frequency) {
+	c_loop( (i, j) => {
+		if(Math.floor((Math.random() * frequency)) == 0)
+			data[i][j] = name;
+	});
+}
+
+function util_set(arr, x, y, new_val) {
+	if(x >= 0 && x < blocks_horizontal)
+		if(y >= 0 && y < blocks_vertical)
+			arr[x][y] = new_val;
+}
+
+function c_expand(target, expansion_type, up, left, right, down) {
+	let arr = JSON.parse(JSON.stringify(data));
+	c_loop( (i, j) => {
+		if(data[i][j] == target)
+		{
+			//if(rand)
+			util_set(arr, i - 1, j, expansion_type);
+			util_set(arr, i + 1, j, expansion_type);
+			util_set(arr, i, j - 1, expansion_type);
+			util_set(arr, i, j + 1, expansion_type);
+		}
+	});
+	data = JSON.parse(JSON.stringify(arr));
+}
+
+// function c_template(target) {
+// 	c_loop( (i, j) => {
+// 	});
+// }
+let block_width = 8;
+let block_height = 8;
+let blocks_horizontal = canvas.width / block_width;
+let blocks_vertical = canvas.height / block_height;
+let data = make2DArr(blocks_horizontal, blocks_vertical);
+
+
+
+// Clear screen with water
+c_fill("water");
+
+// Seed with a few bases
+c_addNoise("land", 400);
+
+// Expand Land
+for(let i = 0; i < 10; ++i)
+	c_expand("land", "land");
+
+setInterval(function() {
+	ctx.strokeStyle="blue";
+
+	for(let i = 0; i < blocks_horizontal; ++i) {
+		for(let j = 0; j < blocks_vertical; ++j) {
+			ctx.fillStyle = lookup(data[i][j]);
+			ctx.fillRect(i * block_width, j * block_height, block_width, block_height);
+		}
+	}
+
+	ctx.stroke();
+},1000/60);
+
+
+
+/* // Resizing stuff
+var width = window.innerWidth
+|| document.documentElement.clientWidth
+|| document.body.clientWidth;
+
+var height = window.innerHeight
+|| document.documentElement.clientHeight
+|| document.body.clientHeight;
+
+canvas.width = width;
+canvas.height = height;
+*/
+</script> 
+
+
+
+</body>
+</html>
