@@ -1,13 +1,7 @@
 <!DOCTYPE html>
 <html>
 <body>
-
-
-
-<canvas id="rwcanvas" width="640" height="480"> Your browser does not support the HTML5 canvas tag.</canvas>
-
-
-
+	<canvas id="rwcanvas" width="640" height="480"> Your browser does not support the HTML5 canvas tag.</canvas>
 <style type="text/css">
 #rwcanvas {
 	position: absolute;
@@ -22,10 +16,30 @@
 
 
 <script>
+  ///////////////////////////
+ // Variables and Friends //
+///////////////////////////
+//#############################################################################
 var canvas = document.getElementById('rwcanvas');
 var ctx = canvas.getContext("2d");
+let block_width = 12;
+let block_height = 12;
+let blocks_horizontal = Math.floor(canvas.width / block_width);
+let blocks_vertical = Math.floor(canvas.height / block_height);
+let data = u_make2DArr(blocks_horizontal, blocks_vertical);
 
-function make2DArr(d1, d2) {
+
+  //////////////////////
+ // Helper Functions //
+//////////////////////
+// Key:
+// u_ = utility function
+// c_ = creation function
+// h_ = hidden helper function. not recommended calling outside of c_ funcs.
+
+//#############################################################################
+// Creates and returns a 2D array with the specified dementions
+function u_make2DArr(d1, d2) {
 	let arr = new Array(d1);
 
 	for(let i = 0; i < d1; ++i)
@@ -34,90 +48,173 @@ function make2DArr(d1, d2) {
 	return arr;
 }
 
-function lookup(name) {
-	if(name == "water")
-		return "#7799AA";
-	if(name == "land")
-		return "#448877";
+// Creates 
+function util_rand(range_start, range_end) {
+	if(range_end == undefined)
+		return Math.floor((Math.random() * range_start));
+	return Math.floor(Math.random() * (range_end - range_start)) + range_start;
+}
 
-	return "#00FF00";
+function u_set(arr, x, y, new_val) {
+	if(x >= 0 && x < blocks_horizontal)
+		if(y >= 0 && y < blocks_vertical)
+			arr[x][y] = new_val;
+}
+
+function u_get(arr, x, y) {
+	if(x >= 0 && x < blocks_horizontal)
+		if(y >= 0 && y < blocks_vertical)
+			return arr[x][y];
+}
+
+//=============================================================================
+// Looks up a string and returns the chosen color code. 
+function lookup(name) {
+	switch(name) {
+		case "water": return "#7799AA";
+		case "land": return "#448877";
+		case "beach": return "#998877";
+		case "rock": return "#9AAABA";
+		default: return "#00FF00";
+	}
 }
 
 
+//=============================================================================
+// Loops over the entire block array
 function c_loop(callback) {
 	for(let i = 0; i < blocks_horizontal; ++i)
 		for(let j = 0; j < blocks_vertical; ++j)
 			callback(i ,j);
 }	
 
+// Fills the entire block array
 function c_fill(name) {
 	c_loop( (i, j) => {
 		data[i][j] = name;
 	});
 }
 
-function util_rand(total, correct, callback) {
-	if(Math.floor((Math.random() * total)) < correct)
-		callback();
-} 
-
+// Randomly sets values every 1/frequency random indicies.
 function c_addNoise(name, frequency) {
 	c_loop( (i, j) => {
-		if(Math.floor((Math.random() * frequency)) == 0)
+		if(util_rand(frequency) == 0)
 			data[i][j] = name;
 	});
 }
 
-function util_set(arr, x, y, new_val) {
-	if(x >= 0 && x < blocks_horizontal)
-		if(y >= 0 && y < blocks_vertical)
-			arr[x][y] = new_val;
-}
+// Sets the 4 immediately bordering indicies in the data array with the 
+// frequency percentage_<direction>. Indicies are set to expansion_type, and
+// are only expanded if they are of type target. This runs as a single pass,
+// copying the data out of the array and setting it again after so thigns
+// aren't infinitely expanded if the target and expansion type are the same.
+function c_expand(target, expansion_type,
+	              percent_up, percent_left, percent_right, percent_down,
+	              expansion_condition) {
 
-function c_expand(target, expansion_type, up, left, right, down) {
 	let arr = JSON.parse(JSON.stringify(data));
+	const per_max = 100;
+
 	c_loop( (i, j) => {
-		if(data[i][j] == target)
-		{
-			//if(rand)
-			util_set(arr, i - 1, j, expansion_type);
-			util_set(arr, i + 1, j, expansion_type);
-			util_set(arr, i, j - 1, expansion_type);
-			util_set(arr, i, j + 1, expansion_type);
+		if(data[i][j] == target) {
+			h_exp_single(arr, i - 1, j, per_max, percent_up
+				, expansion_type, expansion_condition);
+
+			h_exp_single(arr, i + 1, j, per_max, percent_down
+				, expansion_type, expansion_condition);
+
+			h_exp_single(arr, i, j - 1, per_max, percent_left
+				, expansion_type, expansion_condition);
+
+			h_exp_single(arr, i, j + 1, per_max, percent_right
+				, expansion_type, expansion_condition);
 		}
 	});
 	data = JSON.parse(JSON.stringify(arr));
 }
 
-// function c_template(target) {
-// 	c_loop( (i, j) => {
-// 	});
-// }
-let block_width = 8;
-let block_height = 8;
-let blocks_horizontal = canvas.width / block_width;
-let blocks_vertical = canvas.height / block_height;
-let data = make2DArr(blocks_horizontal, blocks_vertical);
+// Helper function for c_expand to assist with expanding based on the 
+// optional presence of a condition, exp_cond. the ane of exp_cond must be 
+// the same as the position you're trying to expand to, if provided.
+function h_exp_single(arr, xPos, yPos, per_max, per_curr, exp_type, exp_cond) {
+	if(exp_cond == undefined) {
+		// Expand if we get an acceptable random number.
+		if(util_rand(per_max) < per_curr)
+			u_set(arr, xPos, yPos, exp_type);
+	} else {
+		// If the square we're targeting meets the expansion condition
+		if(u_get(data, xPos, yPos) == exp_cond)
+			// Expand.
+			if(util_rand(per_max) < per_curr)
+				u_set(arr, xPos, yPos, exp_type);
+	}
 
+}
 
+// target is the type of tile to target. Condition is the tile it must be
+// surrounded with. cond_callback is a callback provided which must return true
+// or false, and it passes the number of occurrences to it. 
+// new_type is the type assuming the condition was met, inserted at 
+// frequency 1/freq.
+function c_change_if_surrounded(target, cond, new_type, freq, cond_callback) {
+	let arr = JSON.parse(JSON.stringify(data));
+	const per_max = 100;
 
+	c_loop( (i, j) => {
+		let occurrences = 0;
+		if(u_get(data, i - 1, j) == cond) ++occurrences;
+		if(u_get(data, i + 1, j) == cond) ++occurrences;
+		if(u_get(data, i, j + 1) == cond) ++occurrences;
+		if(u_get(data, i, j - 1) == cond) ++occurrences;
+		if(cond_callback(occurrences))
+			if(util_rand(per_max) < freq)
+				arr[i][j] = new_type;
+	});
+
+	data = JSON.parse(JSON.stringify(arr));
+}
+  /////////////////////////////
+ // Actual world generation //
+/////////////////////////////
+//#############################################################################
+let iterations_land     = 10;
+let iterations_beach    = 1; 
+let iterations_mountain = 1;
 // Clear screen with water
 c_fill("water");
 
-// Seed with a few bases
+// Seed with a few pieces of land.
 c_addNoise("land", 400);
 
-// Expand Land
-for(let i = 0; i < 10; ++i)
-	c_expand("land", "land");
+// Expand Land with Land
+for(let i = 0; i < iterations_land; ++i)
+	c_expand("land", "land", 25,25,50,50);
 
+// Expand Land with Beaches.
+for(let i = 0; i < iterations_beach; ++i)
+	c_expand("land", "beach", 50,50,50,50, "water");
+
+// Add mountains.
+for(let i = 0; i < iterations_mountain; ++i)
+	c_change_if_surrounded("land", "land", "rock", 5, (occ) => {
+		return (occ == 4);
+	});
+
+
+  //////////////////
+ // Primary Loop //
+//////////////////
+//#############################################################################
 setInterval(function() {
-	ctx.strokeStyle="blue";
+	ctx.strokeStyle="#00FF00"; // fallback, neon green.
 
 	for(let i = 0; i < blocks_horizontal; ++i) {
 		for(let j = 0; j < blocks_vertical; ++j) {
 			ctx.fillStyle = lookup(data[i][j]);
-			ctx.fillRect(i * block_width, j * block_height, block_width, block_height);
+			ctx.fillRect( i * block_width
+						, j * block_height
+						, block_width
+						, block_height);
 		}
 	}
 
