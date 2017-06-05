@@ -15,11 +15,17 @@
 <style type="text/css">
 #rwcanvas {
 	position: block;
-	margin-top: 10px;
+	padding: 0px;
 }
 
 .rw-center {
 	text-align: center;
+}
+
+.rw-space {
+	margin-top: 5px;
+	margin-bottom: 5px;
+	padding: 0px;
 }
 </style>
 
@@ -27,12 +33,15 @@
 <body>
 	<div class="rw-center">
 		<div>
-			<h3>Current Seed: <input id="i1" type="text" disabled="disabled"></h3>
-			<input id="i2" type="text" onsubmit="return nav();">
-			<button id="b1" type="button" onclick="return nav();">Set Seed</button>
-			<button type="button" onclick="return rand_nav();">Randomize</button>
+			<h4 class="rw-space">Current Seed:</h4>
+			<input class="rw-space" id="i1" type="text" disabled="disabled">
+			<br/>
+			<input class="rw-space" id="i2" type="text" onsubmit="return nav();">
+			<br/>
+			<button class="rw-space" id="b1" type="button" onclick="return nav();">Set Seed</button>
+			<button class="rw-space" type="button" onclick="return rand_nav();">Randomize</button>
 		</div>
-	<canvas id="rwcanvas" width="640" height="480"> Your browser does not support the HTML5 canvas tag.</canvas>
+	<canvas  class="rw-space" id="rwcanvas" width="640" height="480"> Your browser does not support the HTML5 canvas tag.</canvas>
 	</div>
 
 <script>
