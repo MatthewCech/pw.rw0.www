@@ -14,12 +14,8 @@
 
 <style type="text/css">
 #rwcanvas {
-	position: absolute;
-	margin: 0;
-	padding: 0;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
+	position: block;
+	margin-top: 10px;
 }
 
 .rw-center {
@@ -30,10 +26,14 @@
 
 <body>
 	<div class="rw-center">
-		<h3>Current Seed: <input id="i1" type="text" disabled="disabled"><button type="button" onclick="return rand_nav();">Randomize</button></h3>
-		<h3><input id="i2" type="text" onsubmit="return nav();"><button id="b1" type="button" onclick="return nav();">Set Seed</button></h3>
-	</div>
+		<div>
+			<h3>Current Seed: <input id="i1" type="text" disabled="disabled"></h3>
+			<input id="i2" type="text" onsubmit="return nav();">
+			<button id="b1" type="button" onclick="return nav();">Set Seed</button>
+			<button type="button" onclick="return rand_nav();">Randomize</button>
+		</div>
 	<canvas id="rwcanvas" width="640" height="480"> Your browser does not support the HTML5 canvas tag.</canvas>
+	</div>
 
 <script>
 function nav() {
