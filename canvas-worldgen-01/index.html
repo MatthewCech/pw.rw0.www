@@ -31,11 +31,9 @@
 <body>
 	<div class="rw-center">
 		<h3>Current Seed: <input id="i1" type="text" disabled="disabled"><button type="button" onclick="return rand_nav();">Randomize</button></h3>
-		<h3><input id="i2" type="text"><button type="button" onclick="return nav();">Set Seed</button></h3>
+		<h3><input id="i2" type="text" onsubmit="return nav();"><button id="b1" type="button" onclick="return nav();">Set Seed</button></h3>
 	</div>
 	<canvas id="rwcanvas" width="640" height="480"> Your browser does not support the HTML5 canvas tag.</canvas>
-
-
 
 <script>
 function nav() {
@@ -46,6 +44,15 @@ function rand_nav() {
   window.location.href = "?seed=" + ("" + Math.random()).substring(2);
   return false;
 }
+
+document.getElementById("i2")
+    .addEventListener("keydown", function(event) {
+    if (event.keyCode == 13) {
+        document.getElementById("b1").click();
+        return false;
+    }
+});
+
   ////////////////////////////
  // Setup and Query String //
 ////////////////////////////
