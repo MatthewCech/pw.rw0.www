@@ -30,8 +30,8 @@
 
 <body>
 	<div class="rw-center">
-		<h3>Current Seed: <input id="input1" type="text" disabled="disabled"></h3>
-		<h3><input id="i1" type="text"><form onsubmit="return nav()"><input id="i2" type="submit" value="Set Seed" /></form></h3>
+		<h3>Current Seed: <input id="i1" type="text" disabled="disabled"></h3>
+		<h3><input id="i2" type="text"><form onsubmit="return nav()"><input type="submit" value="Set Seed" /></form></h3>
 	</div>
 	<canvas id="rwcanvas" width="640" height="480"> Your browser does not support the HTML5 canvas tag.</canvas>
 
@@ -39,8 +39,7 @@
 
 <script>
 function nav() {
-  // HARD CODED THIS IS A BAD MOVE BUT OK THIS IS FINE DON'T QUESTION IT FOR NOW
-  window.location.href = "www.rw0.pw/canvas-worldgen-01/?seed=" + document.getElementById("i2").value;
+  window.location.href = "?seed=" + document.getElementById("i2").value;
   return false;
 }
 
@@ -73,8 +72,9 @@ if(urlParams.seed != undefined) {
 	seed = ("" + Math.random()).substring(2);
 }
 
-let arng = new alea(Math.random());
+let arng = new alea(seed);
 document.getElementById("i1").value = seed;
+document.getElementById("i2").value = seed;
 
   ///////////////////////////
  // Variables and Friends //
