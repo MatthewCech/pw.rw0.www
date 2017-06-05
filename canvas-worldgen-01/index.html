@@ -1,7 +1,17 @@
 <!DOCTYPE html>
 <html>
-<body>
-	<canvas id="rwcanvas" width="640" height="480"> Your browser does not support the HTML5 canvas tag.</canvas>
+	<head>
+	    <!-- meta tags -->
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <!-- external -->
+		<script src="//cdnjs.cloudflare.com/ajax/libs/seedrandom/2.4.3/lib/alea.min.js"></script>
+
+		<!-- Title, etc. -->
+        <title>World Generation: 1</title>
+	</head>	
+
 <style type="text/css">
 #rwcanvas {
 	position: absolute;
@@ -11,11 +21,61 @@
 	left: 50%;
 	transform: translate(-50%, -50%);
 }
+
+.rw-center {
+	text-align: center;
+}
 </style>
+
+
+<body>
+	<div class="rw-center">
+		<h3>Current Seed: <input id="input1" type="text" disabled="disabled"></h3>
+		<h3><input id="input1" type="text"><form onsubmit="return nav()"><input type="submit" value="Set Seed" /></form></h3>
+	</div>
+	<canvas id="rwcanvas" width="640" height="480"> Your browser does not support the HTML5 canvas tag.</canvas>
 
 
 
 <script>
+function nav() {
+  // HARD CODED THIS IS A BAD MOVE BUT OK THIS IS FINE DON'T QUESTION IT FOR NOW
+  window.location.href = "www.rw0.pw/canvas-worldgen-01/?seed=" + seed;
+  return false;
+}
+
+  ////////////////////////////
+ // Setup and Query String //
+////////////////////////////
+//#############################################################################
+// Get the query string from the URL and parse it. 
+// Via: https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
+let urlParams;
+(window.onpopstate = function () {
+    var match,
+        pl     = /\+/g,  // Regex for replacing addition symbol with a space
+        search = /([^&=]+)=?([^&]*)/g,
+        decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
+        query  = window.location.search.substring(1);
+
+    urlParams = {};
+    while (match = search.exec(query))
+       urlParams[decode(match[1])] = decode(match[2]);
+})();
+
+
+// Make use of ARNG because we want to be able to seed stuff. 
+// Via: https://github.com/davidbau/seedrandom
+var seed = 0;
+if(urlParams.seed != undefined) {
+	seed = urlParams.seed;
+} else {
+	seed = ("" + Math.random()).substring(2);
+}
+
+let arng = new alea(Math.random());
+document.getElementById("input1").value = seed;
+
   ///////////////////////////
  // Variables and Friends //
 ///////////////////////////
@@ -48,9 +108,10 @@ function u_make2DArr(d1, d2) {
 	return arr;
 }
 
-// Determines if a percentage was hit while using a random number. Based on data size.
+// Determines if a percentage was hit while using a random number. 
+// Based on data size!
 function util_rand(percentage) {
-	if((Math.random() * data_size) < (data_size * (percentage / 100)))
+	if((arng() * data_size) < (data_size * (percentage / 100)))
 		return true;
 	return false;
 }
