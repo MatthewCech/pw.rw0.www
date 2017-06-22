@@ -4,22 +4,49 @@
 		<!-- Meta tags -->
 		<meta charset="UTF-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="https://fonts.googleapis.com/css?family=Open+Sans|Spectral" rel="stylesheet">
 
 		<!-- Title -->
 		<title>Small Scratch Homepage</title>
 	</head>
+	<style type="text/css">
+		body {
+		    background-color: #121212;
+		    background-image: url("resources/pw_maze_white.png");
+		    font-family: 'Open Sans', sans-serif;
+		}
+
+		h1, h2 {
+			font-family: 'Spectral', serif;
+		}
+
+		.wrapper {
+			max-width: 600px;
+			margin: 0 auto;
+			color: #222222;
+		}
+
+		.enter-column {
+			color: blue;
+		}
+
+	</style>
 	<body>
-		<h3>Canvases</h3>
-		<a href="canvas-worldgen-01">Worldgen</a>
+		<div class="wrapper">
+			<div class="center-column">
+				<h1>Web Project Directory</h1>
+				<hr/>
+				<h2>Canvases</h2>
+				<a href="projects/canvas-worldgen-01">Worldgen v0.1</a>
 
-		<hr/>
-		<h3>HTML</h3>
-		<a href="html-seaside">Seaside</a>
+				<h2>HTML</h2>
+				<a href="projects/html-seaside">Seaside Theme</a>
 
-		<hr/>
-		<h3>Phaser</h3>
-		<a href="phaser-boilerplate">Boilerplate</a><br/>
-		<a href="phaser-particles-weh">Weh</a>      <br/>
-		<a href="phaser-something">Something</a>    <br/>
+				<h2>Phaser</h2>
+				<a href="projects/phaser-boilerplate">Blank Boilerplate</a><br/>
+				<a href="projects/phaser-particles-weh">Weh Simulator</a><br/>
+				<!--<a href="phaser-something">Something</a><br/>-->
+			</div>
+		</div>
 	</body>
 </html>
