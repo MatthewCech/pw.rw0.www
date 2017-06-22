@@ -10,7 +10,7 @@ html, body {
 
 .rw-bg {
 	/* Set background image to fill screen. Disable scrolling effectively. */
-	background: url(resources/assets/water.jpg) no-repeat center center fixed;
+	background: url(../assets/water.jpg) no-repeat center center fixed;
 	-webkit-background-size: cover;
 	-moz-background-size: cover;
 	-o-background-size: cover;
