@@ -11,17 +11,30 @@
         <!-- page config -->
         <title>AutoSnake</title>
     </head>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
     <body>
         <script>
 
 		var snake_head = null;
+    	var snake_food = null;
     	var snake_body = [];
     	var snake_length = 0;
     	var snake_timer = 0;
-    	var snake_direction = 0; // l0 u1 r2 d3
+    	var snake_direction = 0; // left-0 up-1 right-2 down-3
     	var snake_size = 32;
+    	var tiles_width = Math.floor(window.innerWidth / snake_size) - 1;
+    	var tiles_height =  Math.floor(window.innerHeight / snake_size) - 1;
+    	var snake_speed_ms = 0;
 
-          ///////////////////
+    	// Add contains function to snake_body
+
+
+          ///////////////////	
          // Create Levels //
         ///////////////////
         // Main level
@@ -35,44 +48,104 @@
 
             // Configuration goes here. This is called first after construction.
             preload() {
-            	game.load.image("tile", "resources/sprites/tile.png");
+            	game.load.image("head", "resources/assets/sprites/tile.png");
+            	game.load.image("food", "resources/assets/sprites/tile.png");
+            	game.load.image("body", "resources/assets/sprites/tile.png");
             }
-              
+             
+            rand(size) {
+            	return Math.floor(Math.random() * size) * snake_size + 1;
+            }
+
+	    	inBody(x_pos, y_pos) {
+	        	console.log("contains?");
+	        	for(let i = 0; i < snake_body.length; i++) {
+	        		if(snake_body[i].x == x_pos)
+	        			return true;
+	        		if(snake_body[i].y == y_pos)
+	        			return true;
+	        	}
+
+	        	return false;
+	    	};
+
+            placeFood() {
+            	// Find clear x and y location
+            	let x = this.rand(tiles_width);
+            	let y = this.rand(tiles_height);
+
+            	let contains = this.inBody(x, y);
+            	while(contains == true) {
+            		x = this.rand(tiles_width);
+					y = this.rand(tiles_height);
+					contains = this.inBody(x, y);
+            	}
+
+            	// Snake food
+            	if(snake_food != null) {
+            		snake_food.kill();
+            		snake_food = null;
+            	}
+
+            	// Place new sake food
+            	snake_food = game.add.sprite(x, y, 'head');
+            }
+
             // Put things to be regularly initialized once here. 
             create() {
             	game.physics.startSystem(Phaser.Physics.ARCADE);
-            	snake_head = game.add.sprite(80, 0, 'tile');
-            	game.physics.arcade.enable(head);
-              	this.init(); // Should be called last.
+            	snake_head = game.add.sprite(this.rand(tiles_width), this.rand(tiles_height), 'head');
+            	game.physics.arcade.enable(snake_head);
+            	this.placeFood();
             }
               
             // Called once per loop.
             update() {
-            	snake_timer += new Date().getMilliseconds();
-            	if(snake_timer > 1000) {
-            		switch(snake_direction) {
-            			case 0: snake_head.x += snake_size;
-            			case 1: snake_head.y -= snake_size;
-            			case 2: snake_head.x -= snake_size;
-            			case 3: snake_head.y += snake_size;
+            	// Move on tick
+            	snake_timer += game.time.elapsed;
+            	if(snake_timer > snake_speed_ms) {
+
+            		// Reset timer
+            		snake_timer = 0;
+
+            		// Check if we're touching food.
+            		if(snake_food.x == snake_head.x && snake_food.y == snake_head.y)
+            		{
+            			snake_length++;
+            			this.placeFood();
             		}
+
+            		// Add body
+	            	snake_body.push(game.add.sprite(snake_head.x, snake_head.y, 'body'));
+
+	            	// Move snake
+            		switch(snake_direction) {
+            			case 0: snake_head.x += snake_size; break; // left
+            			case 1: snake_head.y -= snake_size; break; // up
+            			case 2: snake_head.x -= snake_size; break; // right
+            			case 3: snake_head.y += snake_size; break; // down
+            		}
+
+            		// Handle AI 
+            		this.runAI();
+
+            		// Remove excess body
+            		if(snake_body.length > snake_length)
+            			snake_body.shift().kill();
             	}
-
-              	this.draw(); // Should be called last.
             }
 
-            // ===== Recommended Functions ===== //
-            // Initialization (and by extention re-initialization or restart code here.)
-            init() {
-            	var snake_head = null;
-		    	var snake_body = [];
-		    	var snake_length = 0;
-		    	var snake_timer = 0;
-		    	var snake_direction = 0;
-            }
-            
-            // Draw code here!
-            draw() {
+            runAI() {
+            	if(snake_food.x < snake_head.x)
+            		snake_direction = 2;
+            	if(snake_food.x > snake_head.x)
+            		snake_direction = 0;
+
+            	if(snake_food.y < snake_head.y)
+            		snake_direction = 1;
+            	if(snake_food.y > snake_head.y)
+            		snake_direction = 3;
+
             }
         }
 
@@ -80,7 +153,7 @@
          // Phaser Setup //
         //////////////////
         // Get game object and add levels. Note: This must come last.
-        var game = new Phaser.Game(800, 600, Phaser.AUTO, '');  // Initialize the phaser window
+        var game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '');  // Initialize the phaser window
         game.state.add('level_main', new Level1(game));         // Add your levels like this.
         game.state.start('level_main');                         // Dictates starting "Level".
 
