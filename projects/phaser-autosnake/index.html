@@ -59,10 +59,7 @@
 
 	    	inBody(x_pos, y_pos) {
 	        	for(let i = 0; i < snake_body.length; i += 1) {
-	        		if(snake_body[i].x == x_pos) {
-	        			return true;
-	        		}
-	        		if(snake_body[i].y == y_pos) {
+	        		if(snake_body[i].x == x_pos && snake_body[i].y == y_pos) {
 	        			return true;
 	        		}
 	        	}
