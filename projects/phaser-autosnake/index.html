@@ -58,12 +58,13 @@
             }
 
 	    	inBody(x_pos, y_pos) {
-	        	console.log("contains?");
-	        	for(let i = 0; i < snake_body.length; i++) {
-	        		if(snake_body[i].x == x_pos)
+	        	for(let i = 0; i < snake_body.length; i += 1) {
+	        		if(snake_body[i].x == x_pos) {
 	        			return true;
-	        		if(snake_body[i].y == y_pos)
+	        		}
+	        		if(snake_body[i].y == y_pos) {
 	        			return true;
+	        		}
 	        	}
 
 	        	return false;
@@ -76,8 +77,8 @@
 
             	let contains = this.inBody(x, y);
             	while(contains == true) {
-            		x = this.rand(tiles_width);
-					y = this.rand(tiles_height);
+            		let x = this.rand(tiles_width);
+					let y = this.rand(tiles_height);
 					contains = this.inBody(x, y);
             	}
 
