@@ -24,23 +24,35 @@
 
         var map;
         var layer;
+        var player;
 
         // Preload information
         function preload() {
             game.load.tilemap('map', 'assets/TileData.csv', null, Phaser.Tilemap.CSV);
             game.load.image('tiles', 'assets/Tiles.png');
-
+        	game.load.image('player', 'assets/Player.png');
         }
 
         // Crearte initial tilemap information
         function create() {
+        	// Get map stuff in the world and add collision
             map = game.add.tilemap('map', 16, 16);
             map.addTilesetImage('tiles');
             layer = map.createLayer(0);
+			map.setCollisionBetween(2, 16, true, layer); // Range from tile 2 to 16
+
+			// Add player
+            player = game.add.sprite(32, 32, 'player');
+
+            // Enable Collisions
+            game.physics.enable(player, Phaser.Physics.ARCADE);
+            player.body.setSize(10, 14, 2, 1);
         }
 
         function update() {
-        	
+        	game.physics.arcade.collide(player, layer);
+        	if(game.input.keyboard.isDown(Phaser.Keyboard.W))
+        		player.body.velocity.x = -100;
         }
 
         </script>
