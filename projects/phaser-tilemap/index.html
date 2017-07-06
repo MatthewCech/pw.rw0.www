@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- meta tags -->
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <!-- external links -->
+        <script type="text/javascript" src="resources/js/phaser.min.js"></script>
+
+        <!-- page config -->
+        <title>Boilerplate</title>
+    </head>
+    <style>
+    body {
+        margin: 0px;
+        padding: 0px;
+    }
+    </style>
+    <body>
+        <script>
+
+        var game = new Phaser.Game(800, 600, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update});
+
+        var map;
+        var layer;
+
+        // Preload information
+        function preload() {
+            game.load.tilemap('map', 'assets/TileData.csv', null, Phaser.Tilemap.CSV);
+            game.load.image('tiles', 'assets/Tiles.png');
+
+        }
+
+        // Crearte initial tilemap information
+        function create() {
+            map = game.add.tilemap('map', 16, 16);
+            map.addTilesetImage('tiles');
+            layer = map.createLayer(0);
+        }
+
+        function update() {
+        	
+        }
+
+        </script>
+    </body>
+</html>
