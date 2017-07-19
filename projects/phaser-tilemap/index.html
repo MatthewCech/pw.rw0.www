@@ -39,20 +39,20 @@
             map = game.add.tilemap('map', 16, 16);
             map.addTilesetImage('tiles');
             layer = map.createLayer(0);
-			map.setCollisionBetween(2, 16, true, layer); // Range from tile 2 to 16
+			map.setCollisionBetween(1, 16, true, layer); // Range from tile 1 to 16
 
 			// Add player
             player = game.add.sprite(32, 32, 'player');
 
-            // Enable Collisions
+            // Enable Collisions for the player
             game.physics.enable(player, Phaser.Physics.ARCADE);
-            player.body.setSize(10, 14, 2, 1);
+            player.body.setSize(32, 32, 0, 0);
         }
 
         function update() {
         	game.physics.arcade.collide(player, layer);
         	if(game.input.keyboard.isDown(Phaser.Keyboard.W))
-        		player.body.velocity.x = -100;
+        		player.body.velocity.y = -100;
         }
 
         </script>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- meta tags -->
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <!-- external links -->
+        <script type="text/javascript" src="resources/js/phaser.min.js"></script>
+
+        <!-- page config -->
+        <title>Web Experiment</title>
+    </head>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+    <body>
+        <script>
+
+          ///////////////////
+         // Create Levels //
+        ///////////////////
+        // Main level
+        class Level1 extends Phaser.State {
+            // Variables
+
+            // ===== Phaser Functions ===== //
+            // First call for constructor.
+            constructor(game){ super(game); 
+
+                // Actual ctor content here.
+                this.bird = null;
+                this.music = null;
+                this.hit_emitter = null;
+                //this.floor = null;
+            }
+
+            // Configuration goes here. This is called first after construction.
+            preload() {
+                game.load.image('bird', 'resources/assets/bird.png');
+                game.load.image('hit', 'resources/assets/hit particle.png');
+                game.load.audio('music', 'resources/assets/mozart horn concerto no.1 in D major via European Archive.mp3');
+            }
+              
+            // Put things to be regularly initialized once here. 
+            create() {
+                game.physics.startSystem(Phaser.Physics.ARCADE);
+                game.stage.backgroundColor = "#FFFFFF";
+
+                // squeak sound setup
+                this.music = game.add.audio('music');
+                this.music.play();
+
+                this.bird = game.add.sprite(20, 100, 'bird');
+                //this.floor = game.add.sprite(20, 200, 'bird');
+            	this.bird.enableBody = true;
+            	game.physics.arcade.enable(this.bird);
+            	//game.physics.arcade.enable(this.floor);
+            	this.bird.enableBody = true;
+            	//this.floor.enableBody = true;
+            	//this.bird.body.velocity.y = 100;
+            	this.bird.body.bounce.y = 1;
+            	this.bird.body.gravity.y = 1500;
+            	//this.floor.body.immovable = true;
+
+                // weh particle emitter setup
+                this.hit_emitter = game.add.emitter(0, 0, 250);
+                this.hit_emitter.makeParticles('hit');
+                this.hit_emitter.gravity = 200;
+                this.hit_emitter.setAlpha(1, 0, 2000);
+
+                // Link up
+                game.input.onDown.add(this.emit, this);
+
+                // Should be called last.
+                this.init();
+            }
+            
+            getRand()
+            {
+            	return .65 + Math.random() * 10 / 5 - .1;
+            }
+
+            emit(mouse_ptr){
+                this.hit_emitter.x = mouse_ptr.x;
+                this.hit_emitter.y = mouse_ptr.y;
+                this.bird.body.velocity.y = -400;
+                this.hit_emitter.start(true, 2000, null, Math.floor(Math.random() * 10) + 5);
+            }
+
+            // Called once per loop.
+            update() {
+            	//if(this.physics.arcade.collide(this.bird, this.floor)) {
+
+            	//}
+                this.draw(); // Should be called last.
+            }
+
+            // ===== Recommended Functions ===== //
+            // Initialization (and by extention re-initialization or restart code here.)
+            init() {
+            }
+            
+            // Draw code here!
+            draw() {
+            }
+        }
+
+          //////////////////
+         // Phaser Setup //
+        //////////////////
+        // Get game object and add levels. Note: This must come last.
+        // Note: Consider scaling by window.devicePixelRatio.
+        var game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '');  // Initialize the phaser window
+        game.state.add('level_main', new Level1(game));                                      // Add your levels like this.
+        game.state.start('level_main');                                                      // Dictates starting "Level".
+
+        </script>
+    </body>
+</html>
