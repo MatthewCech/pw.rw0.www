@@ -1,0 +1,122 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Single Line</title>
+	</head>
+	<style>
+	body {
+		margin: 0px;
+		padding: 0px;
+	}
+	#drawzone {
+		margin: 0px;
+		padding: 0px;
+		text-align: center;
+	}
+	</style>
+	<body>
+		<div style="display:none;">
+	  		<img id="flame" src="resources/assets/flame_alpha.png" width="300" height="200">
+		</div>
+		<audio id="music" src="resources/assets/Dog Wrestler Waltz.mp3"></audio>
+		<canvas id="drawzone" width="100" height="200"></canvas>
+	</body>
+	<script>
+		// Acquired vaguely from stack overflow, mostly just the result of aggressive googling.
+		function rotatePoint(pivot_x, pivot_y, angle, point_x, point_y)
+		{
+			// Set up angles and move to the pivot.
+			let s = Math.sin(angle);
+			let c = Math.cos(angle);
+			point_x -= pivot_x;
+			point_y -= pivot_y;
+
+			// Apply rotation and move back from pivot.
+			let new_x = point_x * c - point_y * s;
+			let new_y = point_x * s + point_y * c;
+			return { x: new_x + pivot_x, y: new_y + pivot_y }
+		}
+
+		// Analyzer is a tweaked version of https://www.patrick-wied.at/blog/how-to-create-audio-visualizations-with-javascript-html
+		window.onload = function() {
+
+			// Generate audio context
+			var audio_context = new AudioContext();
+			var audio = document.getElementById('music');
+			var audioSrc = audio_context.createMediaElementSource(audio);
+			var analyser = audio_context.createAnalyser();
+
+			// Establish our boundaries for the canvas and future calculations.
+			var used_width = window.innerWidth;
+			var used_height = window.innerHeight * .9;
+
+
+			// Generate canvas at the correct size.
+			var canvas = document.getElementById('drawzone');
+			var context = canvas.getContext('2d');
+			context.globalAlpha = 0.2;
+			var flame = document.getElementById('flame');
+			var flame_width = flame.width / 1.5;
+			var flame_height = flame.height;
+
+			// canvas.style.backgroundColor = 'rgba(158, 167, 184, 0.2)';
+			context.canvas.width  = used_width;
+			context.canvas.height = used_height;
+
+			// Connect audio to analyzer, and set up the variable to hold frequency data in. 
+			// frequencyBinCount tells you how many values you'll receive from the analyser.
+			audioSrc.connect(analyser);
+			audioSrc.connect(audio_context.destination);
+			var frequencyData = new Uint8Array(analyser.frequencyBinCount);
+			// Note: analyser config: e.g. analyser.fftSize (for further infos read the spec)
+
+			// Generate Request for rendering each time we go to render.
+			function draw() {
+				// Requeswt we loop this function
+				requestAnimationFrame(draw);
+
+				// Update data in frequencyData so we can visualize properly, drawing the flame back in immediately.
+				analyser.getByteFrequencyData(frequencyData);
+				context.clearRect(0, 0, canvas.width, canvas.height);
+
+				// Establish where the flame will be located.
+				let flame_x = used_width / 2 - flame_width / 2;
+				let flame_y = used_height * .95 - flame_height;;
+				
+				// Define gradients to color the lines.
+				let grad= context.createLinearGradient(0, flame_y, 0, flame_y - used_height / 3);
+				grad.addColorStop(0, "#ffbb33");
+				grad.addColorStop(.5, "#ff9922");
+				grad.addColorStop(1, "#bb5500");
+				context.strokeStyle = grad;
+				context.lineWidth = 2;
+
+				// Draw lines between flame visualizer.
+				context.beginPath();
+				let scalar = 1.5;
+				let angle = 225 / 180 * 3.14159;
+				let offset_x = flame_x + flame_width / 2;// used_width / 2;
+				let offset_y = flame_y + flame_height * .8; //used_height / 2;
+				for(let i = 0; i < frequencyData.length - 3; i++)
+				{
+					let x0 = frequencyData[i] * scalar;
+					let x1 = frequencyData[i + 1] * scalar;
+					let x2 = frequencyData[i + 1] * scalar;
+					let x3 = frequencyData[i + 2] * scalar;
+					let newPoint1 = rotatePoint(0, 0, angle, x0, x1);
+					let newPoint2 = rotatePoint(0, 0, angle, x2, x3);
+					context.moveTo(offset_x + newPoint1.x, offset_y + newPoint1.y);
+					context.lineTo(offset_x + newPoint2.x, offset_y + newPoint2.y);
+				}
+
+				// Draw the flame over the visualization.
+				context.drawImage(flame, flame_x, flame_y, flame_width, flame_height);
+				context.stroke();
+			}
+			audio.play();
+			draw();
+		};
+	</script>
+</html>
