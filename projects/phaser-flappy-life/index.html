@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- meta tags -->
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <!-- external links -->
+        <script type="text/javascript" src="resources/js/phaser.min.js"></script>
+
+        <!-- page config -->
+        <title>Web Experiment</title>
+    </head>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+    <body>
+        <script>
+        	function ButtonPress() {
+        		//does things
+        		// 1
+        		// 2
+        		// 3
+        	}
+
+          ///////////////////
+         // Create Levels //
+        ///////////////////
+        // Main level
+        class Level1 extends Phaser.State {
+            // Variables
+
+            // ===== Phaser Functions ===== //
+            // First call for constructor.
+            constructor(game){ super(game); 
+
+                // Actual ctor content here.
+                this.bird = null;
+                this.music = null;
+                this.kickdrum = null;
+                this.hit_emitter = null;
+                this.camera_shake = 0;
+                this.boom = null;
+                this.explosions = [];
+                this.pipes = [];
+                this.pipe_timer = 100;
+            }
+
+            // Configuration goes here. This is called first after construction.
+            preload() {
+                game.load.spritesheet('explosion', 'resources/assets/RoyaltyFree_explosion71x100.png', 71, 100);
+                game.load.image('bird', 'resources/assets/bird.png');
+                game.load.image('pipe', 'resources/assets/pipe.png');
+                game.load.image('hit', 'resources/assets/hit particle.png');
+                game.load.audio('music', 'resources/assets/mozart horn concerto no.1 in D major via European Archive.mp3');
+                game.load.audio('kickdrum', 'resources/assets/KIT 01 - DRUMS 03.wav');
+                game.load.audio('boom', 'resources/assets/freesoundeffects.com-Explosion+3.mp3')
+            }
+              
+            makeExplosion(x_pos, y_pos) {
+				let explosion = game.add.sprite(0,0, 'explosion');
+                explosion.animations.add('detonate');
+                let size = this.rand(0.5, 4);
+                explosion.scale.x = size;
+                explosion.scale.y = size;
+                explosion.x = x_pos - explosion.width / 2.5;
+                explosion.y = y_pos - explosion.height / 2.5;
+                explosion.animations.play('detonate', 24, false);
+                explosion.angle = this.rand(0, 360);
+                this.explosions.push(explosion);
+                this.boom.play();
+            }
+
+            // Put things to be regularly initialized once here. 
+            create() {
+                game.physics.startSystem(Phaser.Physics.ARCADE);
+                game.stage.backgroundColor = "#FFFFFF";
+
+                // squeak sound setup
+                this.music = game.add.audio('music');
+                this.kickdrum = game.add.audio('kickdrum');
+                this.boom = game.add.audio('boom');
+                this.music.play();
+
+                this.bird = game.add.sprite(0, window.innerHeight / 3, 'bird');
+                this.bird.x = innerWidth / 2 - this.bird.width / 2;
+
+                // Enabling physics.
+            	game.physics.arcade.enable(this.bird);
+            	this.bird.enableBody = true;
+            	this.bird.body.bounce.x = 5;
+            	this.bird.body.bounce.y = 5;
+            	this.bird.body.gravity.y = 1500;
+
+            	// Floor: Unused for testing bounce.
+                //this.floor = game.add.sprite(20, 200, 'bird');
+            	//game.physics.arcade.enable(this.floor);
+            	//this.floor.enableBody = true;
+            	//this.bird.body.velocity.y = 100;
+            	//this.floor.body.immovable = true;
+
+                // weh particle emitter setup
+                this.hit_emitter = game.add.emitter(0, 0, 250);
+                this.hit_emitter.makeParticles('hit');
+                this.hit_emitter.gravity = -200;
+                this.hit_emitter.setAlpha(1, 0, 1000);
+
+                // Link up input
+                game.input.onDown.add(this.emit, this);
+
+                // Get the camera to follow the player
+                //game.camera.follow(this.bird);
+
+                // Should be called last.
+                game.world.setBounds(0, window.innerHeight * .2, window.innerWidth * 5, window.innerHeight * 1.4);
+                this.init();
+                this.music.volume = .15;
+            	//this.camera.body.velocity.x = 3; // Camera goes right
+            	this.bird.body.velocity.x = 3;   // Bird goes right
+            }
+            
+            rand(low, high) {
+            	return low + Math.random() * (high - low);
+            }
+
+            getRand()
+            {
+            	return .65 + Math.random() * 10 / 5 - .1;
+            }
+
+            emit(mouse_ptr){
+            	this.makeExplosion(this.bird.x, this.bird.y);
+            	this.cameraShake(Math.random() * 15 + 5);
+            	this.kickdrum.play();
+                this.hit_emitter.x = this.bird.x + this.bird.width / 2;
+                this.hit_emitter.y = this.bird.y + this.bird.height / 2;
+                this.bird.body.velocity.y = -400;
+                this.hit_emitter.start(true, 2000, null, Math.floor(Math.random() * 10) + 5);
+            }
+
+            cameraShake(shake_to_add) {
+            	this.camera_shake += shake_to_add;
+            }
+            
+            // Called once per loop.
+            update() {
+            	this.pipe_timer -= 1;
+            	if(this.pipe_timer <= 0) {
+	            	// Randomly place pipes
+	            	let pipe = game.add.sprite(0, 0, 'pipe');
+	            	pipe.x = this.bird.x + window.innerWidth;
+	            	pipe.y = game.camera.y + Math.floor(Math.random() * (window.innerHeight / 1.5));
+	            	game.physics.arcade.enable(pipe);
+					pipe.enableBody = true;
+					pipe.body.velocity.x = -200;
+					this.pipes.push(pipe);
+					this.pipe_timer = 100;
+				}
+
+				game.physics.arcade.collide(this.pipes, this.bird);
+
+            	// Explosion upkeep
+            	if(this.explosions.length > 0) {
+            		if(this.explosions[0].frame == 15)
+            			this.explosions.shift().kill();
+            	}
+
+            	this.music.volume += .001;
+            	//console.log("New vol = " + this.music.volume);
+
+            	if(this.camera_shake > 0) {
+        			game.camera.x += Math.floor(Math.random() * this.camera_shake * 2) - this.camera_shake; 
+            		game.camera.y += Math.floor(Math.random() * this.camera_shake * 2) - this.camera_shake; 
+            		this.camera_shake -= 1;
+            	}
+
+            	if(game.camera.x < this.bird.x - 10)
+            		game.camera.x -= 2;
+				else if(game.camera.x > this.bird.x + 10)
+            		game.camera.x += 2;
+
+            	if(game.camera.y > window.innerHeight / 2 - 10)
+            		game.camera.y -= 2;
+				else if(game.camera.y < window.innerHeight / 2 + 10)
+            		game.camera.y += 2;
+
+            	if(this.bird.y > window.innerHeight + game.camera.y)
+            	{
+            		this.bird.body.velocity.y = 0;
+            		this.bird.y = 0
+            	}
+            	//if(this.physics.arcade.collide(this.bird, this.floor)) {
+
+            	//}
+                this.draw(); // Should be called last.
+            }
+
+            // ===== Recommended Functions ===== //
+            // Initialization (and by extention re-initialization or restart code here.)
+            init() {
+            }
+            
+            // Draw code here!
+            draw() {
+            	game.world.bringToTop(this.bird);
+            	for(let i = 0; i < this.explosions.length; i++)
+            		game.world.bringToTop(this.explosions[i]);
+            }
+        }
+
+          //////////////////
+         // Phaser Setup //
+        //////////////////
+        // Get game object and add levels. Note: This must come last.
+        // Note: Consider scaling by window.devicePixelRatio.
+        var game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '');  // Initialize the phaser window
+        game.state.add('level_main', new Level1(game));                                      // Add your levels like this.
+        game.state.start('level_main');                                                      // Dictates starting "Level".
+
+        </script>
+    </body>
+</html>
