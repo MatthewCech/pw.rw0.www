@@ -52,18 +52,22 @@
                 this.world_height = window.innerHeight * 1.2;
                 this.window_width = window.innerWidth;
                 this.window_height = window.innerHeight;
-                this.timer = 1;
-                this.timer_reset = 1;
-                this.timer_increase_reset - false;
+                this.universal_scalar = 1;
+                this.allow_universal_scalar_increase - false;
+
             }
 
             // Configuration goes here. This is called first after construction.
             preload() {
+            	// Spritesheets
                 game.load.spritesheet('explosion', 'resources/assets/RoyaltyFree_explosion71x100.png', 71, 100);
-                game.load.image('bird', 'resources/assets/bird.png');
-                //game.load.image('pipe', 'resources/assets/pipe.png');
                 game.load.spritesheet('pipe', 'resources/assets/pipe.png', 64, 256);
+
+                // Images
+                game.load.image('bird', 'resources/assets/bird.png');
                 game.load.image('hit', 'resources/assets/hit particle.png');
+
+                // Game load audio
                 game.load.audio('music', 'resources/assets/mozart horn concerto no.1 in D major via European Archive.mp3');
                 game.load.audio('kickdrum', 'resources/assets/KIT 01 - DRUMS 03.wav');
                 game.load.audio('boom', 'resources/assets/freesoundeffects.com-Explosion+3.mp3')
@@ -93,8 +97,7 @@
                 this.kickdrum = game.add.audio('kickdrum');
                 this.boom = game.add.audio('boom');
                 this.music.play();
-
-                this.bird = game.add.sprite(this.world_width / 1.5, this.world_height / 2, 'bird');
+                this.bird = game.add.sprite(this.world_width / 1.35, this.world_height / 2, 'bird');
 
                 // Enabling physics.
             	game.physics.arcade.enable(this.bird);
@@ -102,13 +105,6 @@
             	this.bird.body.bounce.x = 5;
             	this.bird.body.bounce.y = 5;
             	this.bird.body.gravity.y = 1500;
-
-            	// Floor: Unused for testing bounce.
-                //this.floor = game.add.sprite(20, 200, 'bird');
-            	//game.physics.arcade.enable(this.floor);
-            	//this.floor.enableBody = true;
-            	//this.bird.body.velocity.y = 100;
-            	//this.floor.body.immovable = true;
 
                 // weh particle emitter setup
                 this.hit_emitter = game.add.emitter(0, 0, 250);
@@ -134,11 +130,6 @@
             	return low + Math.random() * (high - low);
             }
 
-            getRand()
-            {
-            	return .65 + Math.random() * 10 / 5 - .1;
-            }
-
             emit(mouse_ptr){
             	this.kickdrum.play();
             	this.cameraShake(Math.random() * 15 + 5);
@@ -154,78 +145,74 @@
             
             collisionWithToast(toast) {
             	toast.frame = 1;
-            	this.timer_increase_reset = true;
+            	this.allow_universal_scalar_increase = true;
             }
+
             // Called once per loop.
             update() {
+            	// ============= second for dealing with speed scaling
+            	if(this.allow_universal_scalar_increase)
+            		this.universal_scalar += .1;
 
-            	// IF WE ARE CLEAR, UPDATE PRIMART LOOP.
-            	this.timer -= 1;
-            	if(this.timer <= 1)
+            	for(let i = 0; i < this.pipes.length; i++)
             	{
-            		// Reset countdown, increasing reset if we lost.
-            		this.timer = this.timer_reset;
-            		if(this.timer_increase_reset)
-            			this.timer_reset += 1;
-
-            		// Spawn pipes.
-	            	this.pipe_timer -= 1;
-	            	if(this.pipe_timer <= 0) {
-		            	// Randomly place pipes
-		            	let pipe = game.add.sprite(0, 0, 'pipe');
-		            	pipe.frame = 0;
-		            	pipe.x = this.bird.x + window.innerWidth;
-		            	pipe.y = game.camera.y + Math.floor(Math.random() * (window.innerHeight / 1.5));
-		            	game.physics.arcade.enable(pipe);
-						pipe.enableBody = true;
-						pipe.body.velocity.x = -200;
-						pipe.orignal_velocity = pipe.body.velocity.x;
-						this.pipes.push(pipe);
-						this.pipe_timer = 100;
-					}
-
-					if(game.physics.arcade.collide(this.pipes, this.bird, this.collisionWithToast, null, this)) {
-						this.makeExplosion(this.bird.x, this.bird.y);
-						this.makeExplosion(this.bird.x, this.bird.y);
-						this.makeExplosion(this.bird.x, this.bird.y);
-						this.makeExplosion(this.bird.x, this.bird.y);
-					}
-
-	            	// Explosion upkeep
-	            	if(this.explosions.length > 0) {
-	            		if(this.explosions[0].frame >= 15)
-	            			this.explosions.shift().kill();
-	            	}
-
-	            	this.music.volume += .001;
-	            	//console.log("New vol = " + this.music.volume);
-
-	            	if(this.camera_shake > 0) {
-	        			game.camera.x += Math.floor(Math.random() * this.camera_shake * 10) - this.camera_shake * 5; 
-	            		game.camera.y += Math.floor(Math.random() * this.camera_shake * 2) - this.camera_shake; 
-	            		this.camera_shake -= 1;
-	            	}
-
-	            	if(this.can_reset == true) {
-		            	if(this.bird.y > window.innerHeight + window.innerHeight / 2) {
-		            		this.bird.body.velocity.y = 0;
-		            		this.bird.y = 0
-		            	}
-	            	}
-	            	//if(this.physics.arcade.collide(this.bird, this.floor)) {
-	            	let center_x = (this.world_width - this.window_width) / 2 + this.window_width / 2;
-	            	console.log("Center X:" + center_x);
-	            	if(game.camera.x < center_x + 10)
-	            		game.camera.x += 5;
-
-	            	if(game.camera.x > center_x - 10)
-	            		game.camera.x -= 5;
-
-	            	console.log("Camera at x : " + game.camera.x + " --y :" + game.camera.y);
-	            	console.log("Bird at x : " + this.bird.x + " --y :" + this.bird.y);
+            		
+            		if(scaled < 0 && scaled * -1 < 5)
+            			this.pipes[i].body.velocity.x = 0;
+            		else if(scaled > 0 && scaled < 5)
+            			this.pipes[i].body.velocity.x = 0;
+            		else
+            			this.pipes[i].body.velocity.x = this.pipes[i].orignal_velocity / this.universal_scalar;
             	}
+				// Spawn pipes.
+				this.pipe_timer -= 1;
+				if(this.pipe_timer <= 0) {
+					// Randomly place pipes
+					let pipe = game.add.sprite(0, 0, 'pipe');
+					pipe.frame = 0;
+					pipe.x = this.bird.x + window.innerWidth;
+					pipe.y = game.camera.y + Math.floor(Math.random() * (window.innerHeight / 1.5));
+					game.physics.arcade.enable(pipe);
+					pipe.enableBody = true;
+					pipe.body.velocity.x = -200;
+					pipe.orignal_velocity = pipe.body.velocity.x;
+					this.pipes.push(pipe);
+					this.pipe_timer = 100;
+				}
 
-            	//}
+				// Make an explosion
+				if(game.physics.arcade.collide(this.pipes, this.bird, this.collisionWithToast, null, this)) {
+					this.makeExplosion(this.bird.x, this.bird.y);
+					this.makeExplosion(this.bird.x, this.bird.y);
+					this.makeExplosion(this.bird.x, this.bird.y);
+					this.makeExplosion(this.bird.x, this.bird.y);
+				}
+
+				// Slowly and irritatingly increase music volume.
+				this.music.volume += .001;
+
+				// Handle camera shake while necessary.
+				if(this.camera_shake > 0) {
+					game.camera.x += Math.floor(Math.random() * this.camera_shake * 10) - this.camera_shake * 5; 
+					game.camera.y += Math.floor(Math.random() * this.camera_shake * 2) - this.camera_shake; 
+					this.camera_shake -= 1;
+				}
+				if(this.can_reset == true) {
+					if(this.bird.y > window.innerHeight + window.innerHeight / 2) {
+						this.bird.body.velocity.y = 0;
+						this.bird.y = 0
+					}
+				}
+
+				//if(this.physics.arcade.collide(this.bird, this.floor)) {
+				let center_x = (this.world_width - this.window_width) / 2 + this.window_width / 2;
+				console.log("Center X:" + center_x);
+				if(game.camera.x < center_x + 10)
+					game.camera.x += 5;
+				if(game.camera.x > center_x - 10)
+					game.camera.x -= 5;
+
+            	// Call draw upkeep
                 this.draw(); // Should be called last.
             }
 
@@ -236,6 +223,13 @@
             
             // Draw code here!
             draw() {
+				// Explosion upkeep - delete them when necessary.
+				if(this.explosions.length > 0) {
+					if(this.explosions[0].frame >= 15)
+						this.explosions.shift().kill();
+				}
+
+            	// Bring the explosions to top
             	game.world.bringToTop(this.bird);
             	for(let i = 0; i < this.explosions.length; i++)
             		game.world.bringToTop(this.explosions[i]);
