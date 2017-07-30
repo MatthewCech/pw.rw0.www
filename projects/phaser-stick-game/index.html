@@ -42,17 +42,30 @@
                 this.move_speed = 500;
                 this.punch_speed = 2250;
                 this.jump_speed = 1200;
+                this.down_speed = 900;
                 this.punch_right_trigger = false;
                 this.punch_left_trigger = false;
+                this.beat_per_sec = 194/60;//97 / 60;
+                this.environment = [];
             }
 
             // Configuration goes here. This is called first after construction.
             preload() {
                 // Spritesheets
                 game.load.spritesheet('player', 'resources/assets/Movement.png', 32, 32);
+                game.load.spritesheet('grass 1', 'resources/assets/Movement.png', 32, 32);
+                game.load.spritesheet('grass 2', 'resources/assets/Movement.png', 32, 32);
+                game.load.spritesheet('rock 1', 'resources/assets/Movement.png', 32, 32);
+                game.load.spritesheet('rock 2', 'resources/assets/Movement.png', 32, 32);
 
                 // Game load audio
                 game.load.audio('music', 'resources/assets/Fighting Man - DJ Pone & Drixxxe - (The Transporter).mp3')
+            }
+
+            addEnvironmentPiece(xpos, ypos, name) {
+                let new_env = game.add.sprite(xpos, ypos, name);
+                env.animations.add('idle', [0, 1, 2, 3], this.beat_per_sec, true);
+                this.environment.push()
             }
 
             // Put things to be regularly initialized once here. 
@@ -62,11 +75,18 @@
                 game.stage.backgroundColor = "#EEEEEE";
                 game.physics.arcade.gravity.y = 3000;
 
-                // Add player
+                // Once we have the baseline established, we initialize the rest of the stuff in the world.
+                this.initGame()
+
+            }
+
+            // Initialization (and by extention re-initialization or restart code here.)
+            initGame() {
+                 // Add player
                 this.player = game.add.sprite(0, 0 /*window.innerHeight - 64*/, 'player');
                 this.player.scale.setTo(2, 2);
                 this.player.smoothed = false;
-                this.player.animations.add('idle', [6, 7], 2, true);
+                this.player.animations.add('idle', [6, 7], this.beat_per_sec, true);
                 this.player.animations.add('walk_left', [0, 1, 2, 3, 4, 5], 10, true);
                 this.player.animations.add('walk_right', [8, 9, 10, 11, 12, 13], 10, true);
                 this.player.animations.add('punch_right', [14], 4, true);
@@ -80,10 +100,11 @@
                 this.player.body.collideWorldBounds = true;
                 
 
-                // squeak sound Setup
+                // Setup sounds
                 this.music = game.add.audio('music');
                 //this.music.play(); // PLAY MUSIC WITH THIS LINE
             }
+            
 
             emit(mouse_ptr){
                 this.kickdrum.play();
@@ -92,7 +113,28 @@
 
             // Called once per loop.
             update() {
+                // Handle input and Movement of player
+                this.handePlayerMovement();
+
+                // Call draw upkeep
+                this.draw(); // Should be called last.
+            }
+
+            // Handles the movement of the player based on keyboard inputs. Inputs as follows:
+            // 
+            // W/Space/Up   - Jump
+            // Left         - Punch left
+            // Right        - Punch right
+            // A            - Move left
+            // D            - Move right
+            // S/Down       - Force Fall (TODO: Slide?)
+            handePlayerMovement() {
+                // Start with punching. Punching takes top priority, because it is a combat input. 
+                // We allow this to override things, and keep track of if we punched or not this frame
+                // as a result.
                 let punched = false;
+
+                // Right punch
                 if(game.input.keyboard.isDown(Phaser.Keyboard.RIGHT)) {
                     punched = true;
                     if(this.punch_right_trigger == false) {
@@ -104,6 +146,7 @@
                     this.punch_right_trigger = false;
                 }
 
+                // Left punch
                 if(game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
                     punched = true;
                     if(this.punch_left_trigger == false) {
@@ -116,6 +159,10 @@
                 }
 
 
+                // We then move on to jumping and dodging based actions, because these we want to be very
+                // responsive. These are then processed, with the forced falling coming after the jumping
+                // to ensure we are able to have more control of the situation.
+
                 // Jumping
                 if(this.player.body.blocked.down == true) {
                     if(game.input.keyboard.isDown(Phaser.Keyboard.W) 
@@ -123,6 +170,12 @@
                     || game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR)) {
                         this.player.body.velocity.y = -this.jump_speed;
                     }
+                }
+
+                // Forced falling
+                if(game.input.keyboard.isDown(Phaser.Keyboard.S)
+                     || game.input.keyboard.isDown(Phaser.Keyboard.DOWN)) {
+                    this.player.body.velocity.y = this.down_speed;   
                 }
 
 
@@ -163,21 +216,11 @@
                     }
                 }
 
-
-
-
-                // Slow player over time.
+                // Finally, we slow player over time.
                 this.player.body.velocity.x *= 0.7;
 
-                // Call draw upkeep
-                this.draw(); // Should be called last.
             }
 
-            // ===== Recommended Functions ===== //
-            // Initialization (and by extention re-initialization or restart code here.)
-            init() {
-            }
-            
             // Draw code here!
             draw() {
             }
