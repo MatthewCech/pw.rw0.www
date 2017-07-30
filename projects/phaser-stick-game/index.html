@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- meta tags -->
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <!-- external links -->
+        <script type="text/javascript" src="resources/js/phaser.min.js"></script>
+
+        <!-- page config -->
+        <title>Web Experiment</title>
+    </head>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+    <body>
+        <script>
+            function ButtonPress() {
+                //does things
+                // 1
+                // 2
+                // 3
+            }
+
+          ///////////////////
+         // Create Levels //
+        ///////////////////
+        // Main level
+        class Level1 extends Phaser.State {
+            // Variables
+
+            // ===== Phaser Functions ===== //
+            // First call for constructor.
+            constructor(game){ super(game); 
+
+                // Actual ctor content here.
+                this.player = null;
+            }
+
+            // Configuration goes here. This is called first after construction.
+            preload() {
+                // Spritesheets
+                game.load.spritesheet('player', 'resources/assets/IdleRunPunchFinal_HeadCorrected.png', 32, 32);
+
+                // Game load audio
+                game.load.audio('music', 'resources/assets/Fighting Man - DJ Pone & Drixxxe - (The Transporter).mp3')
+            }
+
+            // Put things to be regularly initialized once here. 
+            create() {
+                // Configure world
+                game.physics.startSystem(Phaser.Physics.ARCADE);
+                game.stage.backgroundColor = "#EEEEEE";
+
+                // Add player
+                this.player = game.add.sprite(0, 0, 'player');
+                this.player.scale.setTo(2, 2);
+                this.player.smoothed = false;
+
+                // squeak sound setup
+                this.music = game.add.audio('music');
+                //this.music.play(); // PLAY MUSIC WITH THIS LINE
+            }
+
+            emit(mouse_ptr){
+                this.kickdrum.play();
+            }
+
+            // Called once per loop.
+            update() {
+                // Call draw upkeep
+                this.draw(); // Should be called last.
+            }
+
+            // ===== Recommended Functions ===== //
+            // Initialization (and by extention re-initialization or restart code here.)
+            init() {
+            }
+            
+            // Draw code here!
+            draw() {
+            }
+        }
+
+          //////////////////
+         // Phaser Setup //
+        //////////////////
+        // Get game object and add levels. Note: This must come last.
+        // Note: Consider scaling by window.devicePixelRatio.
+        var game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '');  // Initialize the phaser window
+        game.state.add('level_main', new Level1(game));                                      // Add your levels like this.
+        game.state.start('level_main');                                                      // Dictates starting "Level".
+
+        </script>
+    </body>
+</html>
