@@ -19,12 +19,8 @@
     </style>
     <body>
         <script>
-            function ButtonPress() {
-                //does things
-                // 1
-                // 2
-                // 3
-            }
+
+
 
           ///////////////////
          // Create Levels //
@@ -45,27 +41,36 @@
                 this.down_speed = 900;
                 this.punch_right_trigger = false;
                 this.punch_left_trigger = false;
-                this.beat_per_sec = 194/60;//97 / 60;
+                this.beat_per_sec =  97/60 //BPM is like... 97, tho 194 works well too because hi-hats.
                 this.environment = [];
+                this.collidables = [];
             }
 
             // Configuration goes here. This is called first after construction.
             preload() {
                 // Spritesheets
                 game.load.spritesheet('player', 'resources/assets/Movement.png', 32, 32);
-                game.load.spritesheet('grass 1', 'resources/assets/Movement.png', 32, 32);
-                game.load.spritesheet('grass 2', 'resources/assets/Movement.png', 32, 32);
-                game.load.spritesheet('rock 1', 'resources/assets/Movement.png', 32, 32);
-                game.load.spritesheet('rock 2', 'resources/assets/Movement.png', 32, 32);
+                game.load.spritesheet('grass 1', 'resources/assets/Grass 1.png', 32, 32);
+                game.load.spritesheet('grass 2', 'resources/assets/Grass 2.png', 32, 32);
+                game.load.spritesheet('rock 1', 'resources/assets/Grassy Rock 1.png', 32, 32);
+                game.load.spritesheet('rock 2', 'resources/assets/Grassy Rock 2.png', 32, 32);
+                game.load.spritesheet('block', 'resources/assets/Block.png', 32, 32);
 
                 // Game load audio
                 game.load.audio('music', 'resources/assets/Fighting Man - DJ Pone & Drixxxe - (The Transporter).mp3')
             }
 
+            rand(low, high) {
+                return Math.floor(Math.random() * (high - low)) + low;
+            }
+
             addEnvironmentPiece(xpos, ypos, name) {
                 let new_env = game.add.sprite(xpos, ypos, name);
-                env.animations.add('idle', [0, 1, 2, 3], this.beat_per_sec, true);
-                this.environment.push()
+                new_env.scale.setTo(2, 2);
+                new_env.animations.add('idle', [0, 1, 2, 3], this.beat_per_sec, true);
+                new_env.animations.play('idle');
+                new_env.smoothed = false;
+                this.environment.push(new_env);
             }
 
             // Put things to be regularly initialized once here. 
@@ -73,11 +78,31 @@
                 // Configure world
                 game.physics.startSystem(Phaser.Physics.ARCADE);
                 game.stage.backgroundColor = "#EEEEEE";
-                game.physics.arcade.gravity.y = 3000;
+                //game.physics.arcade.gravity.y = 3000;
 
                 // Once we have the baseline established, we initialize the rest of the stuff in the world.
                 this.initGame()
 
+            }
+
+            placeBlockAt(xpos, ypos) {
+                let block = game.add.sprite(xpos, ypos, 'block');
+                game.physics.enable(block, Phaser.Physics.ARCADE);
+                block.enableBody = true;
+                block.body.collideWorldBounds = true;
+                this.collidables.push(block);
+            }
+
+            a_1(x_pos, y_pos) {
+                placeBlockAt(x_pos, y_pos)
+            }
+
+            arrange(arrangement_number, xoffset, yoffset) {
+                if(!xoffset) xoffset = 0;
+                if(!yoffset) yoffset = 0;
+
+                if(arrangement_number == 1)
+                    a_1(xoffset, yoffset);
             }
 
             // Initialization (and by extention re-initialization or restart code here.)
@@ -86,7 +111,7 @@
                 this.player = game.add.sprite(0, 0 /*window.innerHeight - 64*/, 'player');
                 this.player.scale.setTo(2, 2);
                 this.player.smoothed = false;
-                this.player.animations.add('idle', [6, 7], this.beat_per_sec, true);
+                this.player.animations.add('idle', [6, 7], this.beat_per_sec * 2, true);
                 this.player.animations.add('walk_left', [0, 1, 2, 3, 4, 5], 10, true);
                 this.player.animations.add('walk_right', [8, 9, 10, 11, 12, 13], 10, true);
                 this.player.animations.add('punch_right', [14], 4, true);
@@ -97,8 +122,25 @@
                 this.player.animations.add('fall_left', [18], 4, true);
                 game.physics.enable(this.player, Phaser.Physics.ARCADE);
                 this.player.enableBody = true;
+                this.player.body.gravity.y = 3000;
                 this.player.body.collideWorldBounds = true;
                 
+                // Build environment
+                let y_low = game.height - 64;
+                let x_wid = game.width - 64;
+
+                this.placeBlockAt(64,64);
+
+
+                // for(let i = 0; i < 20; ++i)
+                //     this.addEnvironmentPiece(this.rand(0, x_wid), y_low, 'rock 1')
+                // for(let i = 0; i < 20; ++i)
+                //     this.addEnvironmentPiece(this.rand(0, x_wid), y_low, 'rock 2')
+                // for(let i = 0; i < 20; ++i)
+                //     this.addEnvironmentPiece(this.rand(0, x_wid), y_low, 'grass 1')
+                // for(let i = 0; i < 20; ++i)
+                //     this.addEnvironmentPiece(this.rand(0, x_wid), y_low, 'grass 2')
+
 
                 // Setup sounds
                 this.music = game.add.audio('music');
@@ -113,6 +155,9 @@
 
             // Called once per loop.
             update() {
+                // Handle collisions
+                game.physics.arcade.collide(this.collidables, this.player);
+
                 // Handle input and Movement of player
                 this.handePlayerMovement();
 
@@ -234,6 +279,13 @@
         var game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '');  // Initialize the phaser window
         game.state.add('level_main', new Level1(game));                                      // Add your levels like this.
         game.state.start('level_main');                                                      // Dictates starting "Level".
+
+        window.onresize = function(event) {
+            game.shutdown();
+            game.width = window.innerWidth;
+            game.height = window.innerHeight;
+            game.state.start('level_main');    
+        }
 
         </script>
     </body>
