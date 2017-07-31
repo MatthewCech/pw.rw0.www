@@ -61,7 +61,7 @@
                 game.load.spritesheet('block', 'resources/assets/Block.png', 32, 32);
 
                 // Game load audio
-                game.load.audio('music', 'resources/assets/Fighting Man - DJ Pone & Drixxxe - (The Transporter).mp3')
+                //game.load.audio('music', 'resources/assets/Fighting Man - DJ Pone & Drixxxe - (The Transporter).mp3')
             }
 
             rand(low, high) {
@@ -172,9 +172,9 @@
                     this.addEnvironmentPiece(this.rand(0, x_wid), y_low - 32, 'grass 2')
 
                 // Setup sounds
-                this.music = game.add.audio('music');
-                this.music.volume = .2;
-                this.music.play(); // PLAY MUSIC WITH THIS LINE
+                //this.music = game.add.audio('music');
+                //this.music.volume = .2;
+                //this.music.play(); // PLAY MUSIC WITH THIS LINE
 
                 // Initialize effects
                 this.emitter_hit_effect = game.add.emitter(0, 0, 1000);
