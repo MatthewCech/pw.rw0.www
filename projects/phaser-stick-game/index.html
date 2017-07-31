@@ -35,10 +35,14 @@
 
                 // Actual ctor content here.
                 this.player = null;
+                this.down_triggered = false;
+                this.emitter_hit_effect = null;
+                this.emission_reset = 5;
+                this.emission_countdown = this.emission_reset;
                 this.move_speed = 500;
                 this.punch_speed = 2250;
                 this.jump_speed = 1200;
-                this.down_speed = 900;
+                this.down_speed = 1000;
                 this.punch_right_trigger = false;
                 this.punch_left_trigger = false;
                 this.beat_per_sec =  97/60 //BPM is like... 97, tho 194 works well too because hi-hats.
@@ -171,6 +175,10 @@
                 this.music = game.add.audio('music');
                 this.music.volume = .2;
                 this.music.play(); // PLAY MUSIC WITH THIS LINE
+
+                // Initialize effects
+                this.emitter_hit_effect = game.add.emitter(0, 0, 1000);
+                this.emitter_hit_effect.makeParticles('block');
             }
             
 
@@ -186,6 +194,86 @@
 
                 // Handle input and Movement of player
                 this.handePlayerMovement();
+
+                // Add effects
+                if(this.player.body.blocked.down == true || this.player.body.touching.down == true) {
+                    if(game.input.keyboard.isDown(Phaser.Keyboard.UP) || game.input.keyboard.isDown(Phaser.Keyboard.W))
+                    {
+                        let life = this.rand(400, 1000);
+
+                        game.camera.shake(0.015, 20);
+
+                        this.emitter_hit_effect.x = this.player.x + 32
+                        this.emitter_hit_effect.y = this.player.y + 56;
+                        this.emitter_hit_effect.maxParticleScale = .4;
+                        this.emitter_hit_effect.minParticleScale = .2;
+                        this.emitter_hit_effect.maxParticleSpeed.x = 200;
+                        this.emitter_hit_effect.minParticleSpeed.x = -200;
+                        this.emitter_hit_effect.maxParticleSpeed.y = -100;
+                        this.emitter_hit_effect.minParticleSpeed.y = -0;
+                        this.emitter_hit_effect.autoAlpha = true;
+                        this.emitter_hit_effect.setAlpha(1, 0, life);
+                        this.emitter_hit_effect.start(true, life, null, Math.floor(Math.random() * 3) + 4);
+                    }
+                }
+
+                if(game.input.keyboard.isDown(Phaser.Keyboard.RIGHT) || game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
+                    if(this.emission_countdown > 0) {
+                        this.emission_countdown -= 1;
+
+                        game.camera.shake(0.0025, 20);
+
+                        let flip = -1;
+                        let life = this.rand(100, 200);
+                        if(game.input.keyboard.isDown(Phaser.Keyboard.LEFT))
+                            flip = 1;
+
+                        //this.emitter_hit_effect.gravity.x = 1000;
+                        this.emitter_hit_effect.x = (this.player.x + 32) + 48 * -flip;
+                        this.emitter_hit_effect.y = this.player.y + 32;
+                        this.emitter_hit_effect.maxParticleScale = .3;
+                        this.emitter_hit_effect.minParticleScale = .1;
+                        this.emitter_hit_effect.maxParticleSpeed.x = 200 * flip;
+                        this.emitter_hit_effect.minParticleSpeed.x = 30 * flip;
+                        this.emitter_hit_effect.maxParticleSpeed.y = 50;
+                        this.emitter_hit_effect.minParticleSpeed.y = -50;
+                        this.emitter_hit_effect.autoAlpha = true;
+                        this.emitter_hit_effect.setAlpha(1, 0, life);
+                        this.emitter_hit_effect.start(true, life, null, this.rand(2, 5));
+                    }
+                }
+                else {
+                    this.emission_countdown = this.emission_reset;
+                }
+
+                if(game.input.keyboard.isDown(Phaser.Keyboard.DOWN) || game.input.keyboard.isDown(Phaser.Keyboard.S)) {
+                    if(this.down_triggered == false) {
+                        this.down_triggered = true;
+
+                        game.camera.shake(0.008, 20);
+
+                        let flip = 1;
+                        let life = this.rand(400, 600);
+                        if(this.player.body.velocity.x < 0)
+                            flip = -1;
+
+                        //this.emitter_hit_effect.gravity.x = 1000;
+                        this.emitter_hit_effect.x = (this.player.x + 32);
+                        this.emitter_hit_effect.y = this.player.y + 32;
+                        this.emitter_hit_effect.maxParticleScale = .6;
+                        this.emitter_hit_effect.minParticleScale = .1;
+                        this.emitter_hit_effect.maxParticleSpeed.x = 100 * flip;
+                        this.emitter_hit_effect.minParticleSpeed.x = -100 * flip;
+                        this.emitter_hit_effect.maxParticleSpeed.y = -500//-4000;
+                        this.emitter_hit_effect.minParticleSpeed.y = 10;
+                        this.emitter_hit_effect.autoAlpha = true;
+                        this.emitter_hit_effect.setAlpha(1, 0, life);
+                        this.emitter_hit_effect.start(true, life, null, this.rand(6, 12));
+                    }
+                }
+                else {
+                    this.down_triggered = false;
+                }
 
                 // Call draw upkeep
                 this.draw(); // Should be called last.
