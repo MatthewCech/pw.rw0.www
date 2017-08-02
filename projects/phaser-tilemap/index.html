@@ -28,31 +28,61 @@
 
         // Preload information
         function preload() {
-            game.load.tilemap('map', 'assets/TileData.csv', null, Phaser.Tilemap.CSV);
-            game.load.image('tiles', 'assets/Tiles.png');
+            game.load.tilemap('map', 'assets/TileData2.csv', null, Phaser.Tilemap.CSV);
+            game.load.image('tiles', 'assets/Tiles2.png');
         	game.load.image('player', 'assets/Player.png');
         }
 
         // Crearte initial tilemap information
         function create() {
         	// Get map stuff in the world and add collision
+		    game.physics.startSystem(Phaser.Physics.ARCADE);
+            game.world.setBounds(0, 0, 6000, 600);
+
+            // Load in the tilemap
             map = game.add.tilemap('map', 16, 16);
             map.addTilesetImage('tiles');
             layer = map.createLayer(0);
-			map.setCollisionBetween(1, 16, true, layer); // Range from tile 1 to 16
+			map.setCollisionBetween(176, 178, true, layer); // Range from tile 1 to 16
 
 			// Add player
             player = game.add.sprite(32, 32, 'player');
 
             // Enable Collisions for the player
-            game.physics.enable(player, Phaser.Physics.ARCADE);
+            game.physics.arcade.enable(player);
             player.body.setSize(32, 32, 0, 0);
+            player.body.enable = true;
+            player.body.gravity.y = 2500;
+            player.body.collideWorldBounds = true;
+
+            // Make camera follow the player
+            game.camera.follow(player);
         }
 
+        let CanJump = true;
         function update() {
+
+        	// Handle Jumping
         	game.physics.arcade.collide(player, layer);
-        	if(game.input.keyboard.isDown(Phaser.Keyboard.W))
-        		player.body.velocity.y = -100;
+        	if(game.input.keyboard.isDown(Phaser.Keyboard.W)) {
+        		if(CanJump) {
+        			CanJump = false;
+        			player.body.velocity.y = -650;
+        		}
+        		
+        	} else {
+        		CanJump = true;
+    		}
+
+    		// Handle Movement Left and Right
+    		if(game.input.keyboard.isDown(Phaser.Keyboard.D)) {
+    			player.body.velocity.x = 400;
+    		}
+    		else if(game.input.keyboard.isDown(Phaser.Keyboard.A)) {
+    			player.body.velocity.x = -400;
+    		} else {
+    			player.body.velocity.x = 0;
+    		} 
         }
 
         </script>
