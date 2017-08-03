@@ -59,17 +59,49 @@
 
             // Make camera follow the player
             game.camera.follow(player);
+
+
+		    var swipeCoordX, swipeCoordY, swipeCoordX2, swipeCoordY2, swipeMinDistance = 100;    
+
+		    game.input.onDown.add(function(pointer) {        
+		    	swipeCoordX = pointer.clientX;        
+		    	swipeCoordY = pointer.clientY;        
+			}, this);    
+		    
+		    game.input.onUp.add(function(pointer) {        
+		    	swipeCoordX2 = pointer.clientX;        
+		    	swipeCoordY2 = pointer.clientY;        
+		    	if(swipeCoordX2 < swipeCoordX - swipeMinDistance){
+	                player.body.velocity.x = -speed; // left
+	            }
+		    	else if(swipeCoordX2 > swipeCoordX + swipeMinDistance){
+	                player.body.velocity.x = speed; // right
+	            }
+				else if(swipeCoordY2 < swipeCoordY - swipeMinDistance){
+		            player.body.velocity.y = -jump; // up
+		        }
+				else if(swipeCoordY2 > swipeCoordY + swipeMinDistance){
+		            //console.log("down");  // down      
+		        }
+		    }, this);      
+
+
         }
 
+        var speed = 400;
+        var jump = 650;
         let CanJump = true;
         function update() {
+
+
+
 
         	// Handle Jumping
         	game.physics.arcade.collide(player, layer);
         	if(game.input.keyboard.isDown(Phaser.Keyboard.W)) {
         		if(CanJump) {
         			CanJump = false;
-        			player.body.velocity.y = -650;
+        			player.body.velocity.y = -jump;
         		}
         		
         	} else {
@@ -78,12 +110,12 @@
 
     		// Handle Movement Left and Right
     		if(game.input.keyboard.isDown(Phaser.Keyboard.D)) {
-    			player.body.velocity.x = 400;
+    			player.body.velocity.x = speed;
     		}
     		else if(game.input.keyboard.isDown(Phaser.Keyboard.A)) {
-    			player.body.velocity.x = -400;
+    			player.body.velocity.x = -speed;
     		} else {
-    			player.body.velocity.x = 0;
+    			player.body.velocity.x *= .80;
     		} 
         }
 
