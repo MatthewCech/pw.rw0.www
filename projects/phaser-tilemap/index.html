@@ -20,7 +20,7 @@
     <body>
         <script>
 
-        var game = new Phaser.Game(800, 512, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update});
+        var game = new Phaser.Game(window.innerWidth, 512, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update});
 
         var map;
         var layer;
@@ -74,13 +74,13 @@
 		    	if(swipeCoordX2 < swipeCoordX - swipeMinDistance){
 	                player.body.velocity.x = -speed; // left
 	            }
-		    	else if(swipeCoordX2 > swipeCoordX + swipeMinDistance){
+		    	if(swipeCoordX2 > swipeCoordX + swipeMinDistance){ //elif
 	                player.body.velocity.x = speed; // right
 	            }
-				else if(swipeCoordY2 < swipeCoordY - swipeMinDistance){
+				if(swipeCoordY2 < swipeCoordY - swipeMinDistance){ //elif
 		            player.body.velocity.y = -jump; // up
 		        }
-				else if(swipeCoordY2 > swipeCoordY + swipeMinDistance){
+				if(swipeCoordY2 > swipeCoordY + swipeMinDistance){ //elif
 		            //console.log("down");  // down      
 		        }
 		    }, this);      
