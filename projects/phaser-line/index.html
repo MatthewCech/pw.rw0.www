@@ -162,7 +162,10 @@
                 this.vertical_offset = 100;
 
                 // For some reason, I have to do this to get the font to be requested.
-                let forceloadtext = game.add.text(-200, -200, "", 
+                let forceloadtext = game.add.text(-200, -200, "afs", 
+                    { font: "28pt Montserrat", fill: "#000000", stroke: "#000000", strokeThickness: 1 });
+                forceloadtext.kill();
+                forceloadtext = game.add.text(-200, -200, "afs", 
                     { font: "28pt Montserrat", fill: "#000000", stroke: "#000000", strokeThickness: 1 });
                 forceloadtext.kill();
 
