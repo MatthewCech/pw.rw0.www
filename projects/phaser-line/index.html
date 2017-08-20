@@ -7,6 +7,7 @@
 
         <!-- external links -->
         <script type="text/javascript" src="resources/js/phaser.min.js"></script>
+        <script src="js/gyro.js"></script>
 
         <!-- page config -->
         <title>Lines</title>
@@ -17,7 +18,7 @@
             padding: 0px;
         }
     </style>
-    <body>
+    <body lang="en">
         <script>
 
           ///////////////////
@@ -62,6 +63,36 @@
                 this.touch = game.add.sprite(-100, -100, 'box');
                 this.graphics = game.add.graphics(0, 0);
 
+                // Create background particle class
+                var Background_Particle = function (game, x, y) {
+                    Phaser.Particle.call(this, game, x, y, game.cache.getBitmapData('particleShade'));
+                };
+                Background_Particle.prototype = Object.create(Phaser.Particle.prototype);
+                Background_Particle.prototype.constructor = Background_Particle;
+                
+                // Create custom bitmap and put the bitmapData into the cache
+                let bitmap_data = game.add.bitmapData(64, 64);
+                var radial_gradient = bitmap_data.ctx.createRadialGradient(32, 32, 4, 32, 32, 32);
+                radial_gradient.addColorStop(0, 'rgba(100, 159, 200, 1)');
+                radial_gradient.addColorStop(1, 'rgba(1, 159, 255, 0)');
+                bitmap_data.context.fillStyle = radial_gradient;
+                bitmap_data.context.fillRect(0, 0, 64, 64);
+                game.cache.addBitmapData('particleShade', bitmap_data);
+
+                // Configure emitter for background
+                let emitter = game.add.emitter(game.world.centerX, game.world.centerY, 0);
+                emitter.width = game.width;
+                emitter.height = game.height;
+                emitter.particleClass = Background_Particle;
+                emitter.makeParticles();
+                emitter.minParticleSpeed.set(-10, -10);
+                emitter.maxParticleSpeed.set(10, 10);
+                emitter.setRotation(0, 0);
+                emitter.setScale(0, .3, 0, .3, 12000, Phaser.Easing.Quintic.Out);
+                emitter.start(false, 5000, 100);
+                emitter.autoAlpha = true;
+                emitter.setAlpha(1, 0, 5000);
+                emitter.gravity = 0;
                 // Add circles
                 for(let i = 0; i < 5; ++i)
                     this.add_target(this.rand(50, game.width - 150), this.rand(50, game.height - 150), "target", .5);
