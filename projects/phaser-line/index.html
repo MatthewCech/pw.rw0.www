@@ -39,7 +39,8 @@
 
               // Adding variables
               this.score = 0;
-              this.max_targets = 2;
+              this.max_targets = 1;
+              this.lines_left = 0;
               //this.lines_remaining = 0; << game mode 1.
               //this.sets_to_generate = 0; << game mode 2
               //this.par_for_set = 0; << game mode 2
@@ -231,7 +232,7 @@
                 if(size_scalar == null)
                     size_scalar = 1;
                 if(fade_speed == null)
-                    fade_speed = .97;
+                    fade_speed = .96;
 
                 let font_size = 20 * size_scalar;
 
@@ -258,7 +259,7 @@
                                             , this.targets[i]
                                             , this.targets[i].width / 2);
                     if(res) {
-                        let score = 50;
+                        let score = 10;
                         this.targets[i].fade_scalar = .9;
                         this.fade_list.push(this.targets[i]);
                         this.fade_list.push(this.make_score_text(this.targets[i], "+ " + score, "#BBBBFF"))
@@ -272,28 +273,32 @@
 
                 // Add bonus score.
                 if(num_hit > 0) {
-                    if(this.targets.length <= 1) {
+                    if(this.targets.length < 1) {
                         this.max_targets++;
                         let tmp_obj = {x: game.width / 2, y: game.height - 65};
                         this.fade_list.push(this.make_score_text(tmp_obj, "Zen Level " + (this.max_targets - 1), "#FFEEEE", 1.5, .99));
+                        // Re-add objects
+                        for(let i = this.targets.length; i < this.max_targets; ++i)
+                            this.add_target(this.rand(50, game.width - 150), this.rand(50, game.height - 200), "target");
                     }
-                    // Re-add objects
-                    for(let i = this.targets.length; i < this.max_targets; ++i)
-                        this.add_target(this.rand(50, game.width - 150), this.rand(50, game.height - 200), "target");
 
                     // Add bonus score
-                    let bonus_score = (num_hit - 1) * (15 * (num_hit - 1));
+                    let bonus_score = (num_hit - 1) * (20 * (num_hit - 1));
                     total_add += bonus_score;
                     if(bonus_score > 1) {
                         let tmp_obj = {};
                         tmp_obj.x = this.x_start + (this.x_end - this.x_start) / 2;
-                        tmp_obj.y = this.y_start + (this.y_end - this.y_start) / 2;
+                        tmp_obj.y = this.y_start + (this.y_end - this.y_start) / 2 - 20;
                         this.fade_list.push(this.make_score_text(tmp_obj, "Bonus! +" + bonus_score, "#CCEEFF", 1.25));
                     }
                 }
 
                 if(total_add > 0) {
                     this.score += total_add;
+                    let tmp_obj = {};
+                    tmp_obj.x = this.score_text.x + this.score_text.width / 2 + 55;
+                    tmp_obj.y = this.score_text.y + this.score_text.height / 2 - 15;
+                    this.fade_list.push(this.make_score_text(tmp_obj, "+" + total_add, "#99AAFF", 1.10, .99));
                 }
             }
 
