@@ -30,10 +30,14 @@
             constructor(game){
               super(game);
 
+              // Game Config
+              this.debug = true;
+
               // Adding variables
               this.score = 0;
               this.touch = null;
               this.targets = [];
+              this.fade_list = [];
               this.graphics = null;
               this.should_draw_line = false;
               this.x_start = 0;
@@ -58,7 +62,6 @@
                 // Add circles
                 this.add_target(200, 200, "target", .5);
 
-                this.targets.push(game.add.sprite(game.width / 2))
                 // Handle pointer down
                 game.input.onDown.add(function(pointer) {        
                     this.x_start = pointer.clientX;        
@@ -105,6 +108,7 @@
             
             // Draw code here!
             custom_draw() {
+                // Draw the line visually
                 if(this.should_draw_line == true) {
 
                     // Draw line using graphics
@@ -124,24 +128,50 @@
                     this.graphics.alpha *= .9;
                 }
 
+                // Fade out spheres that need it.
+                for(let i = 0; i < this.fade_list.length;) {
+                    this.fade_list[i].alpha *= .85;
+                    if(this.fade_list[i].alpha < .02) {
+                        this.fade_list[i].kill();
+                        this.fade_list.splice(i, 1)
+                    } else {
+                        ++i;
+                    }
+                }
 
-                // Debug input
-                this.game.debug.inputInfo(8, 16);
+                // Debug output
+                if(this.debug) {
+                    let pos = 0;
+                    game.debug.text("Score: " + this.score, 8, pos += 16);
+                    game.debug.text("Targets list items: " + this.targets.length, 8, pos += 16);
+                    game.debug.text("Fade list items: " + this.fade_list.length, 8, pos += 16);
+                    this.game.debug.inputInfo(8, pos += 32);
+                }
             }
 
             // End drag - swipe code here!
             custom_swipe() {
-                for(let i = 0; i < this.targets.length; ++i) {
+                let num_hit = 0;
+                for(let i = 0; i < this.targets.length;) {
                     let res = this.line_touch(this.x_start
                                             , this.y_start
                                             , this.x_end
                                             , this.y_end
                                             , this.targets[i]
-                                            , this.targets[i].width / 2 * .92);
+                                            , this.targets[i].width / 2);
                     if(res) {
-                        this.targets[i].kill();
+                        this.fade_list.push(this.targets[i]);
+                        this.targets.splice(i, 1);
                         this.score += 50;
+                        ++num_hit;
+                    } else {
+                        ++i;
                     }
+                }
+
+                // Add bonus score.
+                if(num_hit > 0) {
+                    this.score += (num_hit - 1) * 25;
                 }
             }
 
@@ -161,6 +191,11 @@
 
                 // get T val into line. Goes from 0 to 1.
                 let t = dir_x * (sprite.x - ls_x) + dir_y * (sprite.y - ls_y);
+
+                // if t > 1 or < 0, we're not on the line.
+                // At this point, we would be either behind or in front of it.
+                if(t > line_len || t < 0)
+                    return false;
 
                 // get position of the closest point, p.
                 let p_x = t * dir_x + ls_x;
