@@ -128,7 +128,7 @@
                 }, this);   
 
                 // Draw score text label:
-                this.score_text = game.add.text(8, game.height - 31, "Score: ", 
+                this.score_text = game.add.text(8, game.height - 32, "Score: ", 
                     { font: "20pt Montserrat", fill: "#CCEEFF", stroke: "#221166", strokeThickness: 0 });
                 this.score_text.init_y = this.score_text.y;
                 this.score_text.y += this.vertical_offset;
@@ -341,7 +341,7 @@
 
                     if(this.targets.length < 1) {
                         this.max_targets++;
-                        let tmp_obj = {x: game.width / 2, y: 50};
+                        let tmp_obj = {x: game.width / 2, y: 32};
                         let text = this.make_score_text(tmp_obj, "Zen: Level " + (this.max_targets - 1), "#FFEEEE", 1.6, .99);
                         text.body.velocity.y *= -1;
                         this.fade_list.push(text);
@@ -412,7 +412,7 @@
                 let new_target = game.add.sprite(xpos, ypos, name);
                 new_target.anchor.setTo(.5, .5);
                 //new_target.smoothed = false;
-                new_target.scale.setTo(.2, .2);
+                new_target.scale.setTo(.18, .18);
 
                 this.targets.push(new_target);
             }
