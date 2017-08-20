@@ -31,7 +31,9 @@
               super(game);
 
               // Adding variables
+              this.score = 0;
               this.touch = null;
+              this.targets = [];
               this.graphics = null;
               this.should_draw_line = false;
               this.x_start = 0;
@@ -43,14 +45,20 @@
             // Configuration goes here. This is called first after construction.
             preload() {
                 game.load.image('box', 'resources/assets/example.png');
+                game.load.image('target', 'resources/assets/orb.png');
             }
               
             // Put things to be regularly initialized once here. 
             create() {
+                // Set up game
                 game.stage.backgroundColor = "#335588";
                 this.touch = game.add.sprite(-100, -100, 'box');
                 this.graphics = game.add.graphics(0, 0);
 
+                // Add circles
+                this.add_target(200, 200, "target", .5);
+
+                this.targets.push(game.add.sprite(game.width / 2))
                 // Handle pointer down
                 game.input.onDown.add(function(pointer) {        
                     this.x_start = pointer.clientX;        
@@ -113,13 +121,68 @@
                     this.touch.y = this.y_end;
 
                 } else {
-                    this.graphics.alpha *= .95;
+                    this.graphics.alpha *= .9;
                 }
+
+
+                // Debug input
+                this.game.debug.inputInfo(8, 16);
             }
 
             // End drag - swipe code here!
             custom_swipe() {
-                this.custom_swipe
+                for(let i = 0; i < this.targets.length; ++i) {
+                    let res = this.line_touch(this.x_start
+                                            , this.y_start
+                                            , this.x_end
+                                            , this.y_end
+                                            , this.targets[i]
+                                            , this.targets[i].width / 2 * .92);
+                    if(res) {
+                        this.targets[i].kill();
+                        this.score += 50;
+                    }
+                }
+            }
+
+            // Checks if line is crossing over circle of object.
+            // Assumes object anchor is centered.
+            // ls_<...> = line start
+            // le_<...> = line end
+            line_touch(ls_x, ls_y, le_x, le_y, sprite, radius) {
+                // Get length of line
+                let xdif = le_x - ls_x;
+                let ydif = le_y - ls_y;
+                let line_len = Math.sqrt(xdif * xdif + ydif * ydif);
+
+                // Get dir. Vec.
+                let dir_x = xdif / line_len;
+                let dir_y = ydif / line_len;
+
+                // get T val into line. Goes from 0 to 1.
+                let t = dir_x * (sprite.x - ls_x) + dir_y * (sprite.y - ls_y);
+
+                // get position of the closest point, p.
+                let p_x = t * dir_x + ls_x;
+                let p_y = t * dir_y + ls_y;
+
+                // Check if less than radius. Start by finding distance to line.
+                xdif = p_x - sprite.x;
+                ydif = p_y - sprite.y;
+                let circle_dist = Math.sqrt(xdif * xdif + ydif * ydif);
+
+                // Return if we hit/pass through the circle or not.
+                if(circle_dist <= radius)
+                    return true;
+
+                return false;
+            }
+
+            add_target(xpos, ypos, name, scale) {
+                let new_target = game.add.sprite(xpos, ypos, name);
+                new_target.anchor.setTo(.5, .5);
+                new_target.scale.setTo(scale, scale);
+                this.targets.push(new_target);
             }
         }
 
