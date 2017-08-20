@@ -42,6 +42,9 @@
               this.max_targets = 1;
               this.lines_left = 0;
               this.vertical_offset = 0;
+              this.title = null;
+              this.instructions = null;
+              this.indicator = null;
               //this.lines_remaining = 0; << game mode 1.
               //this.sets_to_generate = 0; << game mode 2
               //this.par_for_set = 0; << game mode 2
@@ -62,6 +65,7 @@
             preload() {
                 game.load.image('box', 'resources/assets/example.png');
                 game.load.image('target', 'resources/assets/orb.png');
+                game.load.image('indicator', 'resources/assets/indicator.png');
             }
               
             // Put things to be regularly initialized once here. 
@@ -136,7 +140,8 @@
             // Called once per loop.
             update() {
                 // Adjust offset
-                this.vertical_offset *= .98;
+                if(this.score != 0)
+                    this.vertical_offset *= .97;
 
                 // Update positioning of touch
                 if(this.should_draw_line == true) {
@@ -173,18 +178,40 @@
                 this.touch.position.x = game.width / 2;
                 this.touch.position.y = game.height / 2;
 
-                // Add circles
+                // Add instructions, etc.
                 if(this.max_targets == 1) {
-                    let text = game.add.text(game.width / 2, 200, "Line\nGolf", 
-                        { font: "56pt Montserrat", fill: "#DDEEFF", stroke: "#DDEEFF", strokeThickness: 0 });
-                    game.physics.enable(text, Phaser.Physics.ARCADE);
-                    text.anchor.setTo(.5, .5);
-                    text.enableBody = true;
-                    text.body.velocity.y = 5;
-                    text.fade_scalar = .985;
-                    text.fade_delay = 60;
-                    this.fade_list.push(text);
+                    // Title text
+                    this.title = game.add.text(game.width / 2, game.height/2 - 200, "Line\nGolf", 
+                        { font: "68pt Montserrat", fill: "#DDEEFF", stroke: "#DDEEFF", strokeThickness: 0 });
+                    this.title.anchor.setTo(.5, .5);
+                    game.physics.enable(this.title, Phaser.Physics.ARCADE);
+                    this.title.enableBody = true;
+                    this.title.fade_scalar = .985;
+                    this.title.fade_delay = 216000;
+                    this.fade_list.push(this.title);
+                    
+                    // Instructions text
+                    this.instructions = game.add.text(game.width / 2, game.height/2 + 65, "Swipe to begin.", 
+                        { font: "20pt Montserrat", fill: "#DDEEFF", stroke: "#DDEEFF", strokeThickness: 0 });
+                    this.instructions.anchor.setTo(.5, .5);
+                    game.physics.enable(this.instructions, Phaser.Physics.ARCADE);
+                    this.instructions.enableBody = true;
+                    this.instructions.fade_scalar = .97;
+                    this.instructions.fade_delay = 216000;
+                    this.fade_list.push(this.instructions);
+
+                    // Initial target
                     this.add_target(game.width/2, game.height/2, "target");
+
+                    // Indicator arrow
+                    this.indicator = game.add.sprite(game.width/2, game.height/2, "indicator");             
+                    this.indicator.anchor.setTo(.5, .5);
+                    game.physics.enable(this.indicator, Phaser.Physics.ARCADE);
+                    this.indicator.enableBody = true;
+                    this.indicator.fade_scalar = .9;
+                    this.indicator.fade_delay = 216000;
+                    this.fade_list.push(this.indicator);
+
                 } else {
                 for(let i = 0; i < this.max_targets; ++i)
                     this.add_target(this.rand(50, game.width - 150), this.rand(50, game.height - 200), "target");
@@ -225,7 +252,7 @@
                         else
                             this.fade_list[i].alpha *= .9;
 
-                        if(this.fade_list[i].alpha < .02) {
+                        if(this.fade_list[i].alpha < .002) {
                             this.fade_list[i].kill();
                             this.fade_list.splice(i, 1)
                         } else {
@@ -301,6 +328,17 @@
 
                 // Add bonus score.
                 if(num_hit > 0) {
+                    // Handle instrtuction fadeout
+                    if(this.score == 0) {
+                        this.instructions.fade_delay = 60;
+                        this.title.fade_delay = 60;
+                        this.indicator.fade_delay = 0;
+                        this.instructions.body.velocity.y = 5;
+                        this.title.body.velocity.y = 5;
+                        this.indicator.body.velocity.x = Math.cos(15 * 3.14159 / 180) * 40;
+                        this.indicator.body.velocity.y = -1 * Math.sin(15 * 3.14159 / 180) * 40;
+                    }
+
                     if(this.targets.length < 1) {
                         this.max_targets++;
                         let tmp_obj = {x: game.width / 2, y: game.height - 65};
