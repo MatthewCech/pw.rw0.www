@@ -39,11 +39,12 @@
 
               // Adding variables
               this.score = 0;
+              this.max_targets = 2;
               //this.lines_remaining = 0; << game mode 1.
               //this.sets_to_generate = 0; << game mode 2
               //this.par_for_set = 0; << game mode 2
               this.touch = null;
-              this.score_text = 0;
+              this.score_text = "";
               this.targets = [];
               this.fade_list = [];
               this.graphics = null;
@@ -120,6 +121,10 @@
                     this.should_draw_line = false;
                 }, this);   
 
+                // Draw score text label:
+                this.score_text = game.add.text(8, game.height - 46, "Score: ", 
+                    { font: "26pt Montserrat", fill: "#CCEEFF", stroke: "#221166", strokeThickness: 0 });
+
                 // Initialize things
                 this.custom_init(); // Should be called last.
             }
@@ -159,7 +164,7 @@
                 this.touch.position.y = game.height / 2;
 
                 // Add circles
-                for(let i = 0; i < 5; ++i)
+                for(let i = 0; i < this.max_targets; ++i)
                     this.add_target(this.rand(50, game.width - 150), this.rand(50, game.height - 200), "target");
 
             }
@@ -204,9 +209,9 @@
 
                 // Bottom Box
                 this.graphics_ui.clear();
-                this.graphics_ui.lineStyle(2, 0xCCDDFF, 1);
+                this.graphics_ui.beginFill(0xCCDDFF, 0.5);
                 this.graphics_ui.drawRect(-5, game.height - 50, game.width + 10, 50);
-
+                this.score_text.text = "Score: " + this.score;
 
                 // Debug output
                 if(this.debug == true) {
@@ -220,11 +225,13 @@
 
 
             // Takes an anchor object and a value, then displays it over the object.
-            make_score_text(anchor, text_string, color, size_scalar) {
+            make_score_text(anchor, text_string, color, size_scalar, fade_speed) {
                 if(color == null) 
                     color = "#19cb65";
                 if(size_scalar == null)
                     size_scalar = 1;
+                if(fade_speed == null)
+                    fade_speed = .97;
 
                 let font_size = 20 * size_scalar;
 
@@ -234,7 +241,7 @@
                 text.anchor.setTo(.5, .5);
                 text.enableBody = true;
                 text.body.velocity.y = -15;
-                text.fade_scalar = .97;
+                text.fade_scalar = fade_speed;
                 text.fontWeight = 'bold';
                 return text;
             }
@@ -251,11 +258,12 @@
                                             , this.targets[i]
                                             , this.targets[i].width / 2);
                     if(res) {
+                        let score = 50;
                         this.targets[i].fade_scalar = .9;
                         this.fade_list.push(this.targets[i]);
-                        this.fade_list.push(this.make_score_text(this.targets[i], "+50", "#BBBBFF"))
+                        this.fade_list.push(this.make_score_text(this.targets[i], "+ " + score, "#BBBBFF"))
                         this.targets.splice(i, 1);
-                        total_add += 50;
+                        total_add += score;
                         ++num_hit;
                     } else {
                         ++i;
@@ -264,12 +272,17 @@
 
                 // Add bonus score.
                 if(num_hit > 0) {
+                    if(this.targets.length <= 1) {
+                        this.max_targets++;
+                        let tmp_obj = {x: game.width / 2, y: game.height - 65};
+                        this.fade_list.push(this.make_score_text(tmp_obj, "Zen Level " + (this.max_targets - 1), "#FFEEEE", 1.5, .99));
+                    }
                     // Re-add objects
-                    for(let i = 0; i < num_hit; ++i)
+                    for(let i = this.targets.length; i < this.max_targets; ++i)
                         this.add_target(this.rand(50, game.width - 150), this.rand(50, game.height - 200), "target");
 
                     // Add bonus score
-                    let bonus_score = (num_hit - 1) * (25 * (num_hit - 1));
+                    let bonus_score = (num_hit - 1) * (15 * (num_hit - 1));
                     total_add += bonus_score;
                     if(bonus_score > 1) {
                         let tmp_obj = {};
@@ -280,7 +293,7 @@
                 }
 
                 if(total_add > 0) {
-
+                    this.score += total_add;
                 }
             }
 
