@@ -34,24 +34,24 @@
             // Put things to be regularly initialized once here. 
             create() {
                 this.box = game.add.sprite(0, 0, 'box');
-                this.init_code(); // Should be called last.
+                this.custom_init(); // Should be called last.
             }
               
             // Called once per loop.
             update() {
-                this.draw_code(); // Should be called last.
+                this.custom_draw(); // Should be called last.
             }
 
             // ===== Recommended Functions ===== //
             // Initialization (and by extention re-initialization or restart code here.)
-            init_code() {
+            custom_init() {
                 this.box.anchor.setTo(.5, .5);
                 this.box.position.x = game.width / 2;
                 this.box.position.y = game.height / 2;
             }
             
             // Draw code here!
-            draw_code() {
+            custom_draw() {
             }
         }
 
