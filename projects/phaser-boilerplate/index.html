@@ -23,25 +23,31 @@
             // First call for constructor.
             constructor(game){
               super(game); 
+              this.box = null;
             }
 
             // Configuration goes here. This is called first after construction.
             preload() {
+            	game.load.image('box', 'resources/assets/example.png');
             }
               
             // Put things to be regularly initialized once here. 
             create() {
-              this.init(); // Should be called last.
+        		this.box = game.add.sprite(0, 0, 'box');
+				this.init(); // Should be called last.
             }
               
             // Called once per loop.
             update() {
-              this.draw(); // Should be called last.
+				this.draw(); // Should be called last.
             }
 
             // ===== Recommended Functions ===== //
             // Initialization (and by extention re-initialization or restart code here.)
             init() {
+            	this.box.anchor.setTo(.5, .5);
+            	this.box.position.x = game.width / 2;
+            	this.box.position.y = game.height / 2;
             }
             
             // Draw code here!
