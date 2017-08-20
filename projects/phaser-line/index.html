@@ -35,6 +35,9 @@
 
               // Adding variables
               this.score = 0;
+              //this.lines_remaining = 0; << game mode 1.
+              //this.sets_to_generate = 0; << game mode 2
+              //this.par_for_set = 0; << game mode 2
               this.touch = null;
               this.targets = [];
               this.fade_list = [];
@@ -60,7 +63,8 @@
                 this.graphics = game.add.graphics(0, 0);
 
                 // Add circles
-                this.add_target(200, 200, "target", .5);
+                for(let i = 0; i < 5; ++i)
+                    this.add_target(this.rand(50, game.width - 150), this.rand(50, game.height - 150), "target", .5);
 
                 // Handle pointer down
                 game.input.onDown.add(function(pointer) {        
@@ -130,7 +134,7 @@
 
                 // Fade out spheres that need it.
                 for(let i = 0; i < this.fade_list.length;) {
-                    this.fade_list[i].alpha *= .85;
+                    this.fade_list[i].alpha *= .9;
                     if(this.fade_list[i].alpha < .02) {
                         this.fade_list[i].kill();
                         this.fade_list.splice(i, 1)
@@ -140,12 +144,12 @@
                 }
 
                 // Debug output
-                if(this.debug) {
+                if(this.debug == true) {
                     let pos = 0;
                     game.debug.text("Score: " + this.score, 8, pos += 16);
                     game.debug.text("Targets list items: " + this.targets.length, 8, pos += 16);
                     game.debug.text("Fade list items: " + this.fade_list.length, 8, pos += 16);
-                    this.game.debug.inputInfo(8, pos += 32);
+                    //this.game.debug.inputInfo(8, pos += 32);
                 }
             }
 
@@ -163,6 +167,7 @@
                         this.fade_list.push(this.targets[i]);
                         this.targets.splice(i, 1);
                         this.score += 50;
+                        this.add_target(this.rand(50, game.width - 150), this.rand(50, game.height - 150), "target", .5);
                         ++num_hit;
                     } else {
                         ++i;
@@ -218,6 +223,10 @@
                 new_target.anchor.setTo(.5, .5);
                 new_target.scale.setTo(scale, scale);
                 this.targets.push(new_target);
+            }
+
+            rand(low, high) {
+                return Math.floor(Math.random() * (high - low)) + low
             }
         }
 
