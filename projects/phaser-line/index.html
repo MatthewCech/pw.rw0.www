@@ -7,6 +7,7 @@
 
         <!-- external links -->
         <script type="text/javascript" src="resources/js/phaser.min.js"></script>
+        <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
         <!--<script src="js/gyro.js"></script>-->
 
         <!-- page config -->
@@ -16,6 +17,8 @@
         body {
             margin: 0px;
             padding: 0px;
+            font-family: 'Montserrat', sans-serif;;
+            font-size: 32px;
         }
     </style>
     <body lang="en">
@@ -32,7 +35,7 @@
               super(game);
 
               // Game Config
-              this.debug = true;
+              this.debug = false;
 
               // Adding variables
               this.score = 0;
@@ -40,9 +43,11 @@
               //this.sets_to_generate = 0; << game mode 2
               //this.par_for_set = 0; << game mode 2
               this.touch = null;
+              this.score_text = 0;
               this.targets = [];
               this.fade_list = [];
               this.graphics = null;
+              this.graphics_ui = null;
               this.should_draw_line = false;
               this.x_start = 0;
               this.y_start = 0;
@@ -59,9 +64,13 @@
             // Put things to be regularly initialized once here. 
             create() {
                 // Set up game
+                game.physics.startSystem(Phaser.Physics.ARCADE);
                 game.stage.backgroundColor = "#335588";
+
+                // Add initial items.
                 this.touch = game.add.sprite(-100, -100, 'box');
                 this.graphics = game.add.graphics(0, 0);
+                this.graphics_ui = game.add.graphics(0, 0);
 
                 // Create background particle class
                 var Background_Particle = function (game, x, y) {
@@ -93,9 +102,6 @@
                 emitter.autoAlpha = true;
                 emitter.setAlpha(1, 0, 5000);
                 emitter.gravity = 0;
-                // Add circles
-                for(let i = 0; i < 5; ++i)
-                    this.add_target(this.rand(50, game.width - 150), this.rand(50, game.height - 150), "target");
 
                 // Handle pointer down
                 game.input.onDown.add(function(pointer) {        
@@ -135,9 +141,27 @@
             // ===== Custom user functions ===== //
             // Initialization (and by extention re-initialization or restart code here.)
             custom_init() {
+                // For some reason, I have to do this to get the font to be requested.
+                let forceloadtext = game.add.text(-200, -200, "", 
+                    { font: "28pt Montserrat", fill: "#000000", stroke: "#000000", strokeThickness: 1 });
+                forceloadtext.kill();
+
+                if(this.targets)
+                    while(this.targets.length > 0)
+                        this.targets.shift().kill();
+
+                if(this.fade_list)
+                    while(this.fade_list.length > 0)
+                        this.fade_list.shift().kill();
+
                 this.touch.anchor.setTo(.5, .5);
                 this.touch.position.x = game.width / 2;
                 this.touch.position.y = game.height / 2;
+
+                // Add circles
+                for(let i = 0; i < 5; ++i)
+                    this.add_target(this.rand(50, game.width - 150), this.rand(50, game.height - 200), "target");
+
             }
             
             // Draw code here!
@@ -164,7 +188,11 @@
 
                 // Fade out spheres that need it.
                 for(let i = 0; i < this.fade_list.length;) {
-                    this.fade_list[i].alpha *= .9;
+                    if(this.fade_list[i].fade_scalar != null)
+                        this.fade_list[i].alpha *= this.fade_list[i].fade_scalar;
+                    else
+                        this.fade_list[i].alpha *= .9;
+
                     if(this.fade_list[i].alpha < .02) {
                         this.fade_list[i].kill();
                         this.fade_list.splice(i, 1)
@@ -173,19 +201,48 @@
                     }
                 }
 
+
+                // Bottom Box
+                this.graphics_ui.clear();
+                this.graphics_ui.lineStyle(2, 0xCCDDFF, 1);
+                this.graphics_ui.drawRect(-5, game.height - 50, game.width + 10, 50);
+
+
                 // Debug output
                 if(this.debug == true) {
                     let pos = 0;
                     game.debug.text("Score: " + this.score, 8, pos += 16);
                     game.debug.text("Targets list items: " + this.targets.length, 8, pos += 16);
                     game.debug.text("Fade list items: " + this.fade_list.length, 8, pos += 16);
-                    //this.game.debug.inputInfo(8, pos += 32);
+                    this.game.debug.inputInfo(8, pos += 32);
                 }
+            }
+
+
+            // Takes an anchor object and a value, then displays it over the object.
+            make_score_text(anchor, text_string, color, size_scalar) {
+                if(color == null) 
+                    color = "#19cb65";
+                if(size_scalar == null)
+                    size_scalar = 1;
+
+                let font_size = 20 * size_scalar;
+
+                let text = game.add.text(anchor.x, anchor.y, text_string, 
+                    { font: "" + font_size + "pt Montserrat", fill: color, stroke: "#221166", strokeThickness: 4 });
+                game.physics.enable(text, Phaser.Physics.ARCADE);
+                text.anchor.setTo(.5, .5);
+                text.enableBody = true;
+                text.body.velocity.y = -15;
+                text.fade_scalar = .97;
+                text.fontWeight = 'bold';
+                return text;
             }
 
             // End drag - swipe code here!
             custom_swipe() {
                 let num_hit = 0;
+                let total_add = 0;
                 for(let i = 0; i < this.targets.length;) {
                     let res = this.line_touch(this.x_start
                                             , this.y_start
@@ -194,9 +251,11 @@
                                             , this.targets[i]
                                             , this.targets[i].width / 2);
                     if(res) {
+                        this.targets[i].fade_scalar = .9;
                         this.fade_list.push(this.targets[i]);
+                        this.fade_list.push(this.make_score_text(this.targets[i], "+50", "#BBBBFF"))
                         this.targets.splice(i, 1);
-                        this.score += 50;
+                        total_add += 50;
                         ++num_hit;
                     } else {
                         ++i;
@@ -207,10 +266,21 @@
                 if(num_hit > 0) {
                     // Re-add objects
                     for(let i = 0; i < num_hit; ++i)
-                        this.add_target(this.rand(50, game.width - 150), this.rand(50, game.height - 150), "target");
+                        this.add_target(this.rand(50, game.width - 150), this.rand(50, game.height - 200), "target");
 
                     // Add bonus score
-                    this.score += (num_hit - 1) * 25;
+                    let bonus_score = (num_hit - 1) * (25 * (num_hit - 1));
+                    total_add += bonus_score;
+                    if(bonus_score > 1) {
+                        let tmp_obj = {};
+                        tmp_obj.x = this.x_start + (this.x_end - this.x_start) / 2;
+                        tmp_obj.y = this.y_start + (this.y_end - this.y_start) / 2;
+                        this.fade_list.push(this.make_score_text(tmp_obj, "Bonus! +" + bonus_score, "#CCEEFF", 1.25));
+                    }
+                }
+
+                if(total_add > 0) {
+
                 }
             }
 
