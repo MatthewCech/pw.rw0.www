@@ -7,7 +7,7 @@
 
         <!-- external links -->
         <script type="text/javascript" src="resources/js/phaser.min.js"></script>
-        <script src="js/gyro.js"></script>
+        <!--<script src="js/gyro.js"></script>-->
 
         <!-- page config -->
         <title>Lines</title>
@@ -23,7 +23,7 @@
 
           ///////////////////
          // Create Levels //
-
+        ///////////////////
         // Main level
         class Level1 extends Phaser.State {
             // ===== Phaser Functions ===== //
@@ -95,7 +95,7 @@
                 emitter.gravity = 0;
                 // Add circles
                 for(let i = 0; i < 5; ++i)
-                    this.add_target(this.rand(50, game.width - 150), this.rand(50, game.height - 150), "target", .5);
+                    this.add_target(this.rand(50, game.width - 150), this.rand(50, game.height - 150), "target");
 
                 // Handle pointer down
                 game.input.onDown.add(function(pointer) {        
@@ -120,7 +120,6 @@
               
             // Called once per loop.
             update() {
-                    
                 // Update positioning of touch
                 if(this.should_draw_line == true) {
                     this.x_end = game.input.x;
@@ -198,7 +197,6 @@
                         this.fade_list.push(this.targets[i]);
                         this.targets.splice(i, 1);
                         this.score += 50;
-                        this.add_target(this.rand(50, game.width - 150), this.rand(50, game.height - 150), "target", .5);
                         ++num_hit;
                     } else {
                         ++i;
@@ -207,6 +205,11 @@
 
                 // Add bonus score.
                 if(num_hit > 0) {
+                    // Re-add objects
+                    for(let i = 0; i < num_hit; ++i)
+                        this.add_target(this.rand(50, game.width - 150), this.rand(50, game.height - 150), "target");
+
+                    // Add bonus score
                     this.score += (num_hit - 1) * 25;
                 }
             }
@@ -230,7 +233,7 @@
 
                 // if t > 1 or < 0, we're not on the line.
                 // At this point, we would be either behind or in front of it.
-                if(t > line_len || t < 0)
+                if(t > line_len + radius || t < 0 - radius)
                     return false;
 
                 // get position of the closest point, p.
@@ -249,10 +252,12 @@
                 return false;
             }
 
-            add_target(xpos, ypos, name, scale) {
+            add_target(xpos, ypos, name) {
                 let new_target = game.add.sprite(xpos, ypos, name);
                 new_target.anchor.setTo(.5, .5);
-                new_target.scale.setTo(scale, scale);
+                //new_target.smoothed = false;
+                new_target.scale.setTo(.2, .2);
+
                 this.targets.push(new_target);
             }
 
