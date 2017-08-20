@@ -317,7 +317,7 @@
                         let score = 10;
                         this.targets[i].fade_scalar = .9;
                         this.fade_list.push(this.targets[i]);
-                        this.fade_list.push(this.make_score_text(this.targets[i], "+ " + score, "#BBBBFF"))
+                        this.fade_list.push(this.make_score_text(this.targets[i], "+ " + score, "#99AAFF"))
                         this.targets.splice(i, 1);
                         total_add += score;
                         ++num_hit;
@@ -341,8 +341,10 @@
 
                     if(this.targets.length < 1) {
                         this.max_targets++;
-                        let tmp_obj = {x: game.width / 2, y: game.height - 65};
-                        this.fade_list.push(this.make_score_text(tmp_obj, "Zen Level " + (this.max_targets - 1), "#FFEEEE", 1.5, .99));
+                        let tmp_obj = {x: game.width / 2, y: 50};
+                        let text = this.make_score_text(tmp_obj, "Zen Level " + (this.max_targets - 1), "#FFEEEE", 1.6, .99);
+                        text.body.velocity.y *= -1;
+                        this.fade_list.push(text);
                         // Re-add objects
                         for(let i = this.targets.length; i < this.max_targets; ++i)
                             this.add_target(this.rand(50, game.width - 150), this.rand(50, game.height - 200), "target");
@@ -362,9 +364,9 @@
                 if(total_add > 0) {
                     this.score += total_add;
                     let tmp_obj = {};
-                    tmp_obj.x = this.score_text.x + this.score_text.width / 2 + 55;
+                    tmp_obj.x = this.score_text.x + this.score_text.width / 2 + 45;
                     tmp_obj.y = this.score_text.y + this.score_text.height / 2 - 15;
-                    this.fade_list.push(this.make_score_text(tmp_obj, "+" + total_add, "#99AAFF", 1.10, .99));
+                    this.fade_list.push(this.make_score_text(tmp_obj, "+" + total_add, "#99AAFF", 1, .99));
                 }
             }
 
