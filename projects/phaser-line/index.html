@@ -11,6 +11,12 @@
         <!-- page config -->
         <title>Boilerplate</title>
     </head>
+    <style>
+        body {
+            margin: 0px;
+            padding: 0px;
+        }
+    </style>
     <body>
         <script>
 
@@ -22,8 +28,16 @@
             // ===== Phaser Functions ===== //
             // First call for constructor.
             constructor(game){
-              super(game); 
-              this.box = null;
+              super(game);
+
+              // Adding variables
+              this.touch = null;
+              this.graphics = null;
+              this.should_draw_line = false;
+              this.x_start = 0;
+              this.y_start = 0;
+              this.x_end = 0;
+              this.y_end = 0;
             }
 
             // Configuration goes here. This is called first after construction.
@@ -33,25 +47,79 @@
               
             // Put things to be regularly initialized once here. 
             create() {
-                this.box = game.add.sprite(0, 0, 'box');
+                game.stage.backgroundColor = "#335588";
+                this.touch = game.add.sprite(-100, -100, 'box');
+                this.graphics = game.add.graphics(0, 0);
+
+                // Handle pointer down
+                game.input.onDown.add(function(pointer) {        
+                    this.x_start = pointer.clientX;        
+                    this.y_start = pointer.clientY;
+                    this.x_end = pointer.clientX;        
+                    this.y_end = pointer.clientY;  
+                    this.should_draw_line = true;      
+                }, this);   
+                
+                // Handle pointer up
+                game.input.onUp.add(function(pointer) {        
+                    this.x_end = pointer.clientX;        
+                    this.y_end = pointer.clientY;   
+                    this.custom_swipe();     
+                    this.should_draw_line = false;
+                }, this);   
+
+                // Initialize things
                 this.custom_init(); // Should be called last.
             }
               
             // Called once per loop.
             update() {
+                    
+                // Update positioning of touch
+                if(this.should_draw_line == true) {
+                    this.x_end = game.input.x;
+                    this.y_end = game.input.y;
+                } else {
+                    this.touch.x = -100;
+                    this.touch.y = -100;
+                }
+
                 this.custom_draw(); // Should be called last.
             }
 
-            // ===== Recommended Functions ===== //
+            // ===== Custom user functions ===== //
             // Initialization (and by extention re-initialization or restart code here.)
             custom_init() {
-                this.box.anchor.setTo(.5, .5);
-                this.box.position.x = game.width / 2;
-                this.box.position.y = game.height / 2;
+                this.touch.anchor.setTo(.5, .5);
+                this.touch.position.x = game.width / 2;
+                this.touch.position.y = game.height / 2;
             }
             
             // Draw code here!
             custom_draw() {
+                if(this.should_draw_line == true) {
+
+                    // Draw line using graphics
+                    this.graphics.clear();
+                    this.graphics.lineStyle(5, 0x88BBDD);
+                    this.graphics.moveTo(this.x_start, this.y_start);
+                    this.graphics.lineTo(this.x_end, this.y_end);
+                    this.graphics.alpha = 1;
+                    window.graphics = this.graphics;
+
+                    // After line draw, position and bring touch to top.
+                    this.game.world.bringToTop(this.touch);
+                    this.touch.x = this.x_end;
+                    this.touch.y = this.y_end;
+
+                } else {
+                    this.graphics.alpha *= .95;
+                }
+            }
+
+            // End drag - swipe code here!
+            custom_swipe() {
+                this.custom_swipe
             }
         }
 
@@ -59,10 +127,18 @@
          // Phaser Setup //
         //////////////////
         // Get game object and add levels. Note: This must come last.
-        var game = new Phaser.Game(800, 600, Phaser.AUTO, '');  // Initialize the phaser window
-        game.state.add('level_main', new Level1(game));         // Add your levels like this.
-        game.state.start('level_main');                         // Dictates starting "Level".
+        game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '');  // Initialize the phaser window
+        game.state.add('level_main', new Level1(game));                                      // Add your levels like this.
+        game.state.start('level_main');                                                      // Dictates starting "Level".
 
+        // "Handle" window resizing
+        window.onresize = function(event) {
+            game.destroy();
+            delete game;
+            game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '');
+            game.state.add('level_main', new Level1(game));
+            game.state.start('level_main');    
+        }
         </script>
     </body>
 </html>
