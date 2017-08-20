@@ -128,8 +128,8 @@
                 }, this);   
 
                 // Draw score text label:
-                this.score_text = game.add.text(8, game.height - 46, "Score: ", 
-                    { font: "26pt Montserrat", fill: "#CCEEFF", stroke: "#221166", strokeThickness: 0 });
+                this.score_text = game.add.text(8, game.height - 31, "Score: ", 
+                    { font: "20pt Montserrat", fill: "#CCEEFF", stroke: "#221166", strokeThickness: 0 });
                 this.score_text.init_y = this.score_text.y;
                 this.score_text.y += this.vertical_offset;
 
@@ -181,8 +181,8 @@
                 // Add instructions, etc.
                 if(this.max_targets == 1) {
                     // Title text
-                    this.title = game.add.text(game.width / 2, game.height/2 - 200, "Line\nGolf", 
-                        { font: "68pt Montserrat", fill: "#DDEEFF", stroke: "#DDEEFF", strokeThickness: 0 });
+                    this.title = game.add.text(game.width / 2, game.height/2 - 150, "Line\nGolf", 
+                        { font: "56pt Montserrat", fill: "#DDEEFF", stroke: "#DDEEFF", strokeThickness: 0 });
                     this.title.anchor.setTo(.5, .5);
                     game.physics.enable(this.title, Phaser.Physics.ARCADE);
                     this.title.enableBody = true;
@@ -265,7 +265,7 @@
                 // Bottom Box
                 this.graphics_ui.clear();
                 this.graphics_ui.beginFill(0xCCDDFF, 0.5);
-                this.graphics_ui.drawRect(-5, game.height - 50 + this.vertical_offset, game.width + 10, 50);
+                this.graphics_ui.drawRect(-5, game.height - 35 + this.vertical_offset, game.width + 10, 35);
                 this.score_text.text = "Score: " + this.score;
                 this.score_text.y = this.score_text.init_y + this.vertical_offset;
 
