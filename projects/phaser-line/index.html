@@ -41,6 +41,7 @@
               this.score = 0;
               this.max_targets = 1;
               this.lines_left = 0;
+              this.vertical_offset = 0;
               //this.lines_remaining = 0; << game mode 1.
               //this.sets_to_generate = 0; << game mode 2
               //this.par_for_set = 0; << game mode 2
@@ -125,6 +126,8 @@
                 // Draw score text label:
                 this.score_text = game.add.text(8, game.height - 46, "Score: ", 
                     { font: "26pt Montserrat", fill: "#CCEEFF", stroke: "#221166", strokeThickness: 0 });
+                this.score_text.init_y = this.score_text.y;
+                this.score_text.y += this.vertical_offset;
 
                 // Initialize things
                 this.custom_init(); // Should be called last.
@@ -132,6 +135,9 @@
               
             // Called once per loop.
             update() {
+                // Adjust offset
+                this.vertical_offset *= .98;
+
                 // Update positioning of touch
                 if(this.should_draw_line == true) {
                     this.x_end = game.input.x;
@@ -147,6 +153,9 @@
             // ===== Custom user functions ===== //
             // Initialization (and by extention re-initialization or restart code here.)
             custom_init() {
+                // Offset vertically
+                this.vertical_offset = 100;
+
                 // For some reason, I have to do this to get the font to be requested.
                 let forceloadtext = game.add.text(-200, -200, "", 
                     { font: "28pt Montserrat", fill: "#000000", stroke: "#000000", strokeThickness: 1 });
@@ -165,8 +174,21 @@
                 this.touch.position.y = game.height / 2;
 
                 // Add circles
+                if(this.max_targets == 1) {
+                    let text = game.add.text(game.width / 2, 200, "Line\nGolf", 
+                        { font: "56pt Montserrat", fill: "#DDEEFF", stroke: "#DDEEFF", strokeThickness: 0 });
+                    game.physics.enable(text, Phaser.Physics.ARCADE);
+                    text.anchor.setTo(.5, .5);
+                    text.enableBody = true;
+                    text.body.velocity.y = 5;
+                    text.fade_scalar = .985;
+                    text.fade_delay = 60;
+                    this.fade_list.push(text);
+                    this.add_target(game.width/2, game.height/2, "target");
+                } else {
                 for(let i = 0; i < this.max_targets; ++i)
                     this.add_target(this.rand(50, game.width - 150), this.rand(50, game.height - 200), "target");
+                }
 
             }
             
@@ -194,16 +216,21 @@
 
                 // Fade out spheres that need it.
                 for(let i = 0; i < this.fade_list.length;) {
-                    if(this.fade_list[i].fade_scalar != null)
-                        this.fade_list[i].alpha *= this.fade_list[i].fade_scalar;
-                    else
-                        this.fade_list[i].alpha *= .9;
-
-                    if(this.fade_list[i].alpha < .02) {
-                        this.fade_list[i].kill();
-                        this.fade_list.splice(i, 1)
-                    } else {
+                    if(this.fade_list[i].fade_delay != null && this.fade_list[i].fade_delay > 0) {
+                        this.fade_list[i].fade_delay -= 1;
                         ++i;
+                    } else {
+                        if(this.fade_list[i].fade_scalar != null)
+                            this.fade_list[i].alpha *= this.fade_list[i].fade_scalar;
+                        else
+                            this.fade_list[i].alpha *= .9;
+
+                        if(this.fade_list[i].alpha < .02) {
+                            this.fade_list[i].kill();
+                            this.fade_list.splice(i, 1)
+                        } else {
+                            ++i;
+                        }
                     }
                 }
 
@@ -211,8 +238,9 @@
                 // Bottom Box
                 this.graphics_ui.clear();
                 this.graphics_ui.beginFill(0xCCDDFF, 0.5);
-                this.graphics_ui.drawRect(-5, game.height - 50, game.width + 10, 50);
+                this.graphics_ui.drawRect(-5, game.height - 50 + this.vertical_offset, game.width + 10, 50);
                 this.score_text.text = "Score: " + this.score;
+                this.score_text.y = this.score_text.init_y + this.vertical_offset;
 
                 // Debug output
                 if(this.debug == true) {
