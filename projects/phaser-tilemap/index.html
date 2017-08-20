@@ -20,7 +20,7 @@
     <body>
         <script>
 
-        var game = new Phaser.Game(800, 600, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update});
+        var game = new Phaser.Game(window.innerWidth, 512, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update});
 
         var map;
         var layer;
@@ -37,11 +37,13 @@
         function create() {
         	// Get map stuff in the world and add collision
 		    game.physics.startSystem(Phaser.Physics.ARCADE);
-            game.world.setBounds(0, 0, 6000, 600);
+            game.world.setBounds(0, 0, 6000, 512);
 
             // Load in the tilemap
             map = game.add.tilemap('map', 16, 16);
+            let heightOfMap = 16 * 32;
             map.addTilesetImage('tiles');
+            map.y = game.height - heightOfMap;
             layer = map.createLayer(0);
 			map.setCollisionBetween(1, 1, true, layer); // Range from tile 1 to 16
 
@@ -57,17 +59,49 @@
 
             // Make camera follow the player
             game.camera.follow(player);
+
+
+		    var swipeCoordX, swipeCoordY, swipeCoordX2, swipeCoordY2, swipeMinDistance = 100;    
+
+		    game.input.onDown.add(function(pointer) {        
+		    	swipeCoordX = pointer.clientX;        
+		    	swipeCoordY = pointer.clientY;        
+			}, this);    
+		    
+		    game.input.onUp.add(function(pointer) {        
+		    	swipeCoordX2 = pointer.clientX;        
+		    	swipeCoordY2 = pointer.clientY;        
+		    	if(swipeCoordX2 < swipeCoordX - swipeMinDistance){
+	                player.body.velocity.x = -speed; // left
+	            }
+		    	if(swipeCoordX2 > swipeCoordX + swipeMinDistance){ //elif
+	                player.body.velocity.x = speed; // right
+	            }
+				if(swipeCoordY2 < swipeCoordY - swipeMinDistance){ //elif
+		            player.body.velocity.y = -jump; // up
+		        }
+				if(swipeCoordY2 > swipeCoordY + swipeMinDistance){ //elif
+		            //console.log("down");  // down      
+		        }
+		    }, this);      
+
+
         }
 
+        var speed = 400;
+        var jump = 650;
         let CanJump = true;
         function update() {
+
+
+
 
         	// Handle Jumping
         	game.physics.arcade.collide(player, layer);
         	if(game.input.keyboard.isDown(Phaser.Keyboard.W)) {
         		if(CanJump) {
         			CanJump = false;
-        			player.body.velocity.y = -650;
+        			player.body.velocity.y = -jump;
         		}
         		
         	} else {
@@ -76,12 +110,12 @@
 
     		// Handle Movement Left and Right
     		if(game.input.keyboard.isDown(Phaser.Keyboard.D)) {
-    			player.body.velocity.x = 400;
+    			player.body.velocity.x = speed;
     		}
     		else if(game.input.keyboard.isDown(Phaser.Keyboard.A)) {
-    			player.body.velocity.x = -400;
+    			player.body.velocity.x = -speed;
     		} else {
-    			player.body.velocity.x = 0;
+    			player.body.velocity.x *= .80;
     		} 
         }
 
