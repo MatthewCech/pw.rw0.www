@@ -38,6 +38,7 @@
               this.debug = false;
 
               // Adding variables
+              this.target_width = 0;
               this.score = 0;
               this.max_targets = 1;
               this.lines_left = 0;
@@ -48,6 +49,7 @@
               this.emitter_bubble_pop = null;
               this.emitter_cursor = null;
               this.line_width = 5;
+              this.image_scalar = .25;
               //this.lines_remaining = 0; << game mode 1.
               //this.sets_to_generate = 0; << game mode 2
               //this.par_for_set = 0; << game mode 2
@@ -78,7 +80,7 @@
             create() {
                 // Set up game
                 game.physics.startSystem(Phaser.Physics.ARCADE);
-                game.stage.backgroundColor = "#4466AA";
+                game.stage.backgroundColor = '#335588' //"#4466AA";
 
                 // Add initial items.
                 this.touch = game.add.sprite(-1000, -1000, 'cursor');
@@ -255,7 +257,7 @@
 
                 } else {
                 for(let i = 0; i < this.max_targets; ++i)
-                    this.add_target(this.rand(50, game.width - 150), this.rand(50, game.height - 200), "target");
+                    this.add_target(this.rand(50, game.width - target_width), this.rand(50, game.height - target_width - 35), "target");
                 }
 
             }
@@ -333,7 +335,7 @@
                 // Bottom Box
                 this.graphics_ui.clear();
                 this.graphics_ui.beginFill(0xCCDDFF, 0.5);
-                this.graphics_ui.drawRect(-5, game.height - 35 + this.vertical_offset, game.width + 10, 35);
+                this.graphics_ui.drawRect(-10, game.height - 35 + this.vertical_offset, game.width + 20, 50);
                 this.score_text.text = "Score: " + this.score;
                 this.score_text.y = this.score_text.init_y + this.vertical_offset;
 
@@ -380,7 +382,7 @@
                                             , this.x_end
                                             , this.y_end
                                             , this.targets[i]
-                                            , this.targets[i].width / 2 + 1);
+                                            , this.targets[i].width / 2 + 2);
                     if(res) {
                         this.emitter_bubble_pop.x = this.targets[i].x;
                         this.emitter_bubble_pop.y = this.targets[i].y;
@@ -412,6 +414,7 @@
 
                     if(this.targets.length < 1) {
                         this.max_targets++;
+                        this.image_scalar *= .95;
                         let tmp_obj = {x: game.width / 2, y: 32};
                         let text = this.make_score_text(tmp_obj, "Zen: Level " + (this.max_targets - 1), "#FFEEEE", 1.65, .99);
                         text.body.velocity.y *= -1;
@@ -419,7 +422,7 @@
                         this.fade_list.push(text);
                         // Re-add objects
                         for(let i = this.targets.length; i < this.max_targets; ++i)
-                            this.add_target(this.rand(50, game.width - 150), this.rand(50, game.height - 200), "target");
+                            this.add_target(this.rand(0, game.width - this.target_width), this.rand(0, game.height - this.target_width - 35), "target");
                     }
 
                     // Add bonus score
@@ -486,8 +489,8 @@
                 //new_target.tint = 0xffffff;
                 //new_target.smoothed = false;
                 new_target.alpha = .75;
-                new_target.scale.setTo(.185, .185);
-
+                new_target.scale.setTo(this.image_scalar, this.image_scalar);
+                this.target_width = new_target.width;
                 this.targets.push(new_target);
             }
 
