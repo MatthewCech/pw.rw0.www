@@ -254,8 +254,8 @@
 
                 } else {
                 for(let i = this.targets.length; i < this.max_targets; ++i)
-                    this.add_target(this.rand(this.target_width/2, game.width - this.target_width/2)
-                                  , this.rand(this.target_width/2, game.height - this.target_width/2 - 35)
+                    this.add_target(this.rand(this.target_width, game.width - this.target_width/2)
+                                  , this.rand(this.target_width, game.height - this.target_width/2 - 35)
                                   , "target");
                 }
 
@@ -419,8 +419,8 @@
                         this.fade_list.push(text);
                         // Re-add objects
                         for(let i = this.targets.length; i < this.max_targets; ++i)
-                            this.add_target(this.rand(this.target_width/2, game.width - this.target_width/2)
-                                          , this.rand(this.target_width/2, game.height - this.target_width/2 - 35)
+                            this.add_target(this.rand(this.target_width, game.width - this.target_width/2)
+                                          , this.rand(this.target_width, game.height - this.target_width/2 - 35)
                                           , "target");
                     }
 
