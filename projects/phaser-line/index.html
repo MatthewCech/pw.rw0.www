@@ -35,12 +35,12 @@
               super(game);
 
               // Game Config
-              this.debug = false;
+              this.debug = true;
 
               // Adding variables
               this.target_width = 0;
               this.score = 0;
-              this.max_targets = 1;
+              this.max_targets = 10000;
               this.lines_left = 0;
               this.vertical_offset = 0;
               this.title = null;
@@ -199,6 +199,10 @@
             custom_init() {
                 // Offset vertically
                 this.vertical_offset = 100;
+                let tmp = game.add.sprite(-200, -200, 'target');
+                tmp.scale.setTo(this.image_scalar, this.image_scalar);
+                this.target_width = tmp.width;
+                tmp.kill();
 
                 // For some reason, I have to do this to get the font to be requested.
                 let forceloadtext = game.add.text(-200, -200, "afs", 
@@ -229,7 +233,7 @@
                     this.title.anchor.setTo(.5, .5);
                     game.physics.enable(this.title, Phaser.Physics.ARCADE);
                     this.title.enableBody = true;
-                    this.title.fade_scalar = .985;
+                    this.title.fade_scalar = .97;
                     this.title.fade_delay = 216000;
                     this.fade_list.push(this.title);
                     
@@ -256,8 +260,10 @@
                     this.fade_list.push(this.indicator);
 
                 } else {
-                for(let i = 0; i < this.max_targets; ++i)
-                    this.add_target(this.rand(50, game.width - target_width), this.rand(50, game.height - target_width - 35), "target");
+                for(let i = this.targets.length; i < this.max_targets; ++i)
+                    this.add_target(this.rand(this.target_width/2, game.width - this.target_width/2)
+                                  , this.rand(this.target_width/2, game.height - this.target_width/2 - 35)
+                                  , "target");
                 }
 
             }
@@ -345,6 +351,7 @@
                     game.debug.text("Score: " + this.score, 8, pos += 16);
                     game.debug.text("Targets list items: " + this.targets.length, 8, pos += 16);
                     game.debug.text("Fade list items: " + this.fade_list.length, 8, pos += 16);
+                    game.debug.text("Target width: " + this.target_width, 8, pos += 16);
                     this.game.debug.inputInfo(8, pos += 32);
                 }
             }
