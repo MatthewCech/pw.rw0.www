@@ -45,10 +45,14 @@
               this.title = null;
               this.instructions = null;
               this.indicator = null;
+              this.emitter_bubble_pop = null;
+              this.emitter_cursor = null;
+              this.line_width = 5;
               //this.lines_remaining = 0; << game mode 1.
               //this.sets_to_generate = 0; << game mode 2
               //this.par_for_set = 0; << game mode 2
               this.touch = null;
+              this.touch_start = null
               this.score_text = "";
               this.targets = [];
               this.fade_list = [];
@@ -64,6 +68,8 @@
             // Configuration goes here. This is called first after construction.
             preload() {
                 game.load.image('box', 'resources/assets/example.png');
+                game.load.image('light', 'resources/assets/light.png');
+                game.load.image('cursor', 'resources/assets/cursor.png');
                 game.load.image('target', 'resources/assets/orb.png');
                 game.load.image('indicator', 'resources/assets/indicator.png');
             }
@@ -72,10 +78,11 @@
             create() {
                 // Set up game
                 game.physics.startSystem(Phaser.Physics.ARCADE);
-                game.stage.backgroundColor = "#335588";
+                game.stage.backgroundColor = "#4466AA";
 
                 // Add initial items.
-                this.touch = game.add.sprite(-100, -100, 'box');
+                this.touch = game.add.sprite(-1000, -1000, 'cursor');
+                this.touch_start = game.add.sprite(-1000, -1000, 'cursor');
                 this.graphics = game.add.graphics(0, 0);
                 this.graphics_ui = game.add.graphics(0, 0);
 
@@ -109,6 +116,30 @@
                 emitter.autoAlpha = true;
                 emitter.setAlpha(1, 0, 5000);
                 emitter.gravity = 0;
+
+                this.emitter_bubble_pop = game.add.emitter(0, 0, 100);
+                this.emitter_bubble_pop.enableBody = true;
+                this.emitter_bubble_pop.makeParticles('box');
+                this.emitter_bubble_pop.gravity = 0;
+                this.emitter_bubble_pop.minParticleSpeed.set(-150, -150);
+                this.emitter_bubble_pop.maxParticleSpeed.set(150, 150);
+                this.emitter_bubble_pop.minParticleAlpha = 0;
+                this.emitter_bubble_pop.maxParticleAlpha = 1;
+                this.emitter_bubble_pop.minParticleScale = .05;
+                this.emitter_bubble_pop.maxParticleScale = .95;
+                this.emitter_bubble_pop.setAlpha(1, 0, 750);
+                this.emitter_bubble_pop.autoAlpha = true;
+                this.emitter_bubble_pop.particleDrag = .9;
+
+
+                this.emitter_cursor = game.add.emitter(0, 0, 2000);
+                this.emitter_cursor.makeParticles('light');
+                this.emitter_cursor.minParticleSpeed.set(-15, -15);
+                this.emitter_cursor.maxParticleSpeed.set(15, 15);
+                this.emitter_cursor.setScale(0, .5, 0, .5, 1000, Phaser.Easing.Quintic.Out);
+                this.emitter_cursor.setAlpha(1, 0, 500);
+                this.emitter_cursor.autoAlpha = true;
+                this.emitter_cursor.flow(500, 2, 1);
 
                 // Handle pointer down
                 game.input.onDown.add(function(pointer) {        
@@ -147,9 +178,15 @@
                 if(this.should_draw_line == true) {
                     this.x_end = game.input.x;
                     this.y_end = game.input.y;
+                    this.touch_start.x = this.x_start;
+                    this.touch_start.y = this.y_start;
+                    this.touch.x = this.x_end;
+                    this.touch.y = this.y_end;
                 } else {
-                    this.touch.x = -100;
-                    this.touch.y = -100;
+                    this.touch.x = -1000;
+                    this.touch.y = -1000;
+                    this.touch_start.x = -1000;
+                    this.touch_start.y = -1000;
                 }
 
                 this.custom_draw(); // Should be called last.
@@ -178,8 +215,9 @@
                         this.fade_list.shift().kill();
 
                 this.touch.anchor.setTo(.5, .5);
-                this.touch.position.x = game.width / 2;
-                this.touch.position.y = game.height / 2;
+                this.touch.scale.setTo(.75, .75);
+                this.touch_start.anchor.setTo(.5, .5);
+                this.touch_start.scale.setTo(.75, .75);
 
                 // Add instructions, etc.
                 if(this.max_targets == 1) {
@@ -229,7 +267,9 @@
 
                     // Draw line using graphics
                     this.graphics.clear();
-                    this.graphics.lineStyle(5, 0x88BBDD);
+                    if(this.line_width < 5)
+                        this.line_width += .1;
+                    this.graphics.lineStyle(this.line_width, 0xDDEEFF);
                     this.graphics.moveTo(this.x_start, this.y_start);
                     this.graphics.lineTo(this.x_end, this.y_end);
                     this.graphics.alpha = 1;
@@ -237,11 +277,32 @@
 
                     // After line draw, position and bring touch to top.
                     this.game.world.bringToTop(this.touch);
-                    this.touch.x = this.x_end;
-                    this.touch.y = this.y_end;
+
+                    // Update cursor particle effect
+                    let xdif = this.x_end - this.x_start;
+                    let ydif = this.y_end - this.y_start;
+                    let len = Math.sqrt(xdif * xdif + ydif * ydif);
+                    let t = Math.random();
+                    this.emitter_cursor.x = this.x_start + t * xdif;
+                    this.emitter_cursor.y = this.y_start + t * ydif;
+                    this.emitter_cursor.gravity.x = xdif / len * 600;
+                    this.emitter_cursor.gravity.y = ydif / len * 600;
+                    //this.emitter_cursor.area.height = 1;// = Math.sqrt(xdif * xdif + ydif * ydif);;
+ 
 
                 } else {
                     this.graphics.alpha *= .9;
+                    this.line_width *= .9;
+                    if(this.graphics.alpha > .01) {
+                        this.graphics.clear();
+                        this.graphics.lineStyle(this.line_width, 0xDDEEFF);
+                        this.graphics.moveTo(this.x_start, this.y_start);
+                        this.graphics.lineTo(this.x_end, this.y_end);
+                    }
+                    this.emitter_cursor.width = 1;
+                    this.emitter_cursor.height = 1;
+                    this.emitter_cursor.x = -1000;
+                    this.emitter_cursor.y = -1000;
                 }
 
                 // Fade out spheres that need it.
@@ -317,6 +378,9 @@
                                             , this.targets[i]
                                             , this.targets[i].width / 2);
                     if(res) {
+                        this.emitter_bubble_pop.x = this.targets[i].x;
+                        this.emitter_bubble_pop.y = this.targets[i].y;
+                        this.emitter_bubble_pop.start(true, 750, null, 10);
                         let score = 10;
                         this.targets[i].fade_scalar = .9;
                         this.fade_list.push(this.targets[i]);
@@ -414,8 +478,10 @@
             add_target(xpos, ypos, name) {
                 let new_target = game.add.sprite(xpos, ypos, name);
                 new_target.anchor.setTo(.5, .5);
+                //new_target.tint = 0xffffff;
                 //new_target.smoothed = false;
-                new_target.scale.setTo(.18, .18);
+                new_target.alpha = .75;
+                new_target.scale.setTo(.185, .185);
 
                 this.targets.push(new_target);
             }
