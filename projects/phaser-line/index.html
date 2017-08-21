@@ -35,7 +35,7 @@
               super(game);
 
               // Game Config
-              this.debug = true;
+              this.debug = false;
 
               // Adding variables
               this.target_width = 0;
@@ -389,7 +389,7 @@
                                             , this.x_end
                                             , this.y_end
                                             , this.targets[i]
-                                            , this.targets[i].width / 2 + 2);
+                                            , this.targets[i].width / 2 + (line_width + 1) / 2);
                     if(res) {
                         this.emitter_bubble_pop.x = this.targets[i].x;
                         this.emitter_bubble_pop.y = this.targets[i].y;
