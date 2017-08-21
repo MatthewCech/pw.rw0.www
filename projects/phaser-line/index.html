@@ -114,7 +114,7 @@
                 emitter.maxParticleSpeed.set(10, 10);
                 emitter.setRotation(0, 0);
                 emitter.setScale(0, .3, 0, .3, 12000, Phaser.Easing.Quintic.Out);
-                emitter.start(false, 20, 200);
+                emitter.start(false, 5000, 200);
                 emitter.autoAlpha = true;
                 emitter.setAlpha(1, 0, 5000);
                 emitter.gravity = 0;
@@ -411,10 +411,10 @@
                     if(this.targets.length < 1) {
                         this.max_targets++;
                         this.image_scalar *= .95;
-                        let tmp_obj = {x: game.width / 2, y:-24};
+                        let tmp_obj = {x: game.width / 2, y:24};
                         let text = this.make_score_text(tmp_obj, "Level " + (this.max_targets - 1), "#FFEEEE", 1.5, .98);
-                        text.body.velocity.y *= -1.25;
-                        text.fade_delay = 160;
+                        text.body.velocity.y *= -1;
+                        text.fade_delay = 60;
                         game.world.bringToTop(text);
                         this.fade_list.push(text);
                         // Re-add objects
