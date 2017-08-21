@@ -220,22 +220,24 @@
                 if(this.max_targets == 1) {
                     // Title text
                     this.title = game.add.text(game.width / 2, game.height/2 - 115, "Line\nGolf", 
-                        { font: "48pt Montserrat", fill: "#DDEEFF", stroke: "#DDEEFF", strokeThickness: 0 });
+                        { font: "64pt Georgia", fill: "#DDEEFF", stroke: "#DDEEFF", strokeThickness: 0 });
                     this.title.anchor.setTo(.5, .5);
                     game.physics.enable(this.title, Phaser.Physics.ARCADE);
                     this.title.enableBody = true;
-                    this.title.fade_scalar = .97;
+                    this.title.fade_scalar = .96;
                     this.title.fade_delay = 216000;
+                    this.title.scale.setTo(.75, .75);
                     this.fade_list.push(this.title);
                     
                     // Instructions text
                     this.instructions = game.add.text(game.width / 2, game.height/2 + 60, "Swipe to begin.", 
-                        { font: "16pt Montserrat", fill: "#DDEEFF", stroke: "#DDEEFF", strokeThickness: 0 });
+                        { font: "24pt Georgia", fill: "#DDEEFF", stroke: "#DDEEFF", strokeThickness: 0 });
                     this.instructions.anchor.setTo(.5, .5);
                     game.physics.enable(this.instructions, Phaser.Physics.ARCADE);
                     this.instructions.enableBody = true;
-                    this.instructions.fade_scalar = .97;
+                    this.instructions.fade_scalar = .96;
                     this.instructions.fade_delay = 216000;
+                    this.instructions.scale.setTo(.75, .75);
                     this.fade_list.push(this.instructions);
 
                     // Initial target
@@ -397,8 +399,8 @@
                 if(num_hit > 0) {
                     // Handle instrtuction fadeout
                     if(this.score == 0) {
-                        this.instructions.fade_delay = 60;
-                        this.title.fade_delay = 60;
+                        this.instructions.fade_delay = 30;
+                        this.title.fade_delay = 30;
                         this.indicator.fade_delay = 0;
                         this.instructions.body.velocity.y = 5;
                         this.title.body.velocity.y = 5;
@@ -409,9 +411,10 @@
                     if(this.targets.length < 1) {
                         this.max_targets++;
                         this.image_scalar *= .95;
-                        let tmp_obj = {x: game.width / 2, y: 32};
-                        let text = this.make_score_text(tmp_obj, "Zen: Level " + (this.max_targets - 1), "#FFEEEE", 1.2, .99);
-                        text.body.velocity.y *= -1;
+                        let tmp_obj = {x: game.width / 2, y:-24};
+                        let text = this.make_score_text(tmp_obj, "Level " + (this.max_targets - 1), "#FFEEEE", 1.5, .98);
+                        text.body.velocity.y *= -1.25;
+                        text.fade_delay = 160;
                         game.world.bringToTop(text);
                         this.fade_list.push(text);
                         // Re-add objects
