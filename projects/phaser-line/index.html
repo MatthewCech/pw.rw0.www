@@ -48,8 +48,8 @@
               this.indicator = null;
               this.emitter_bubble_pop = null;
               this.emitter_cursor = null;
-              this.line_width = 5;
-              this.image_scalar = .25;
+              this.line_width = 4;
+              this.image_scalar = .225;
               //this.lines_remaining = 0; << game mode 1.
               //this.sets_to_generate = 0; << game mode 2
               //this.par_for_set = 0; << game mode 2
@@ -114,34 +114,31 @@
                 emitter.maxParticleSpeed.set(10, 10);
                 emitter.setRotation(0, 0);
                 emitter.setScale(0, .3, 0, .3, 12000, Phaser.Easing.Quintic.Out);
-                emitter.start(false, 5000, 100);
+                emitter.start(false, 20, 200);
                 emitter.autoAlpha = true;
                 emitter.setAlpha(1, 0, 5000);
                 emitter.gravity = 0;
 
-                this.emitter_bubble_pop = game.add.emitter(0, 0, 100);
-                this.emitter_bubble_pop.enableBody = true;
+                // Bubble pop effect
+                this.emitter_bubble_pop = game.add.emitter(-1000, -1000, 50);
+                this.emitter_bubble_pop.gravity.y = 0;
                 this.emitter_bubble_pop.makeParticles('box');
-                this.emitter_bubble_pop.gravity = 0;
                 this.emitter_bubble_pop.minParticleSpeed.set(-150, -150);
                 this.emitter_bubble_pop.maxParticleSpeed.set(150, 150);
-                this.emitter_bubble_pop.minParticleAlpha = 0;
-                this.emitter_bubble_pop.maxParticleAlpha = 1;
                 this.emitter_bubble_pop.minParticleScale = .05;
                 this.emitter_bubble_pop.maxParticleScale = .95;
                 this.emitter_bubble_pop.setAlpha(1, 0, 750);
                 this.emitter_bubble_pop.autoAlpha = true;
-                this.emitter_bubble_pop.particleDrag = .9;
 
-
-                this.emitter_cursor = game.add.emitter(0, 0, 2000);
+                // Adding an emitter to the cursor
+                this.emitter_cursor = game.add.emitter(-1000, -1000, 166);
                 this.emitter_cursor.makeParticles('light');
                 this.emitter_cursor.minParticleSpeed.set(-15, -15);
                 this.emitter_cursor.maxParticleSpeed.set(15, 15);
                 this.emitter_cursor.setScale(0, .5, 0, .5, 1000, Phaser.Easing.Quintic.Out);
                 this.emitter_cursor.setAlpha(1, 0, 500);
                 this.emitter_cursor.autoAlpha = true;
-                this.emitter_cursor.flow(500, 2, 1);
+                this.emitter_cursor.flow(500, 3, 1);
 
                 // Handle pointer down
                 game.input.onDown.add(function(pointer) {        
@@ -161,8 +158,8 @@
                 }, this);   
 
                 // Draw score text label:
-                this.score_text = game.add.text(8, game.height - 32, "Score: ", 
-                    { font: "20pt Montserrat", fill: "#CCEEFF", stroke: "#221166", strokeThickness: 0 });
+                this.score_text = game.add.text(8, game.height - 28, "Score: ", 
+                    { font: "16pt Montserrat", fill: "#CCEEFF", stroke: "#221166", strokeThickness: 0 });
                 this.score_text.init_y = this.score_text.y;
                 this.score_text.y += this.vertical_offset;
 
@@ -184,13 +181,7 @@
                     this.touch_start.y = this.y_start;
                     this.touch.x = this.x_end;
                     this.touch.y = this.y_end;
-                } else {
-                    this.touch.x = -1000;
-                    this.touch.y = -1000;
-                    this.touch_start.x = -1000;
-                    this.touch_start.y = -1000;
                 }
-
                 this.custom_draw(); // Should be called last.
             }
 
@@ -228,8 +219,8 @@
                 // Add instructions, etc.
                 if(this.max_targets == 1) {
                     // Title text
-                    this.title = game.add.text(game.width / 2, game.height/2 - 150, "Line\nGolf", 
-                        { font: "56pt Montserrat", fill: "#DDEEFF", stroke: "#DDEEFF", strokeThickness: 0 });
+                    this.title = game.add.text(game.width / 2, game.height/2 - 115, "Line\nGolf", 
+                        { font: "48pt Montserrat", fill: "#DDEEFF", stroke: "#DDEEFF", strokeThickness: 0 });
                     this.title.anchor.setTo(.5, .5);
                     game.physics.enable(this.title, Phaser.Physics.ARCADE);
                     this.title.enableBody = true;
@@ -238,8 +229,8 @@
                     this.fade_list.push(this.title);
                     
                     // Instructions text
-                    this.instructions = game.add.text(game.width / 2, game.height/2 + 65, "Swipe to begin.", 
-                        { font: "20pt Montserrat", fill: "#DDEEFF", stroke: "#DDEEFF", strokeThickness: 0 });
+                    this.instructions = game.add.text(game.width / 2, game.height/2 + 60, "Swipe to begin.", 
+                        { font: "16pt Montserrat", fill: "#DDEEFF", stroke: "#DDEEFF", strokeThickness: 0 });
                     this.instructions.anchor.setTo(.5, .5);
                     game.physics.enable(this.instructions, Phaser.Physics.ARCADE);
                     this.instructions.enableBody = true;
@@ -279,7 +270,7 @@
 
                     // Draw line using graphics
                     this.graphics.clear();
-                    if(this.line_width < 5)
+                    if(this.line_width < 4)
                         this.line_width += .1;
                     this.graphics.lineStyle(this.line_width, 0xEEEEFF);
                     this.graphics.moveTo(this.x_start, this.y_start);
@@ -311,10 +302,6 @@
                         this.graphics.moveTo(this.x_start, this.y_start);
                         this.graphics.lineTo(this.x_end, this.y_end);
                     }
-                    this.emitter_cursor.width = 1;
-                    this.emitter_cursor.height = 1;
-                    this.emitter_cursor.x = -1000;
-                    this.emitter_cursor.y = -1000;
                 }
 
                 // Fade out spheres that need it.
@@ -366,7 +353,7 @@
                 if(fade_speed == null)
                     fade_speed = .96;
 
-                let font_size = 20 * size_scalar;
+                let font_size = 18 * size_scalar;
 
                 let text = game.add.text(anchor.x, anchor.y, text_string, 
                     { font: "" + font_size + "pt Montserrat", fill: color, stroke: "#221166", strokeThickness: 4 });
@@ -397,7 +384,7 @@
                         let score = 10;
                         this.targets[i].fade_scalar = .9;
                         this.fade_list.push(this.targets[i]);
-                        this.fade_list.push(this.make_score_text(this.targets[i], "+ " + score, "#AABBFF"))
+                        this.fade_list.push(this.make_score_text(this.targets[i], "+ " + score, "#AABBFF", .75))
                         this.targets.splice(i, 1);
                         total_add += score;
                         ++num_hit;
@@ -423,7 +410,7 @@
                         this.max_targets++;
                         this.image_scalar *= .95;
                         let tmp_obj = {x: game.width / 2, y: 32};
-                        let text = this.make_score_text(tmp_obj, "Zen: Level " + (this.max_targets - 1), "#FFEEEE", 1.65, .99);
+                        let text = this.make_score_text(tmp_obj, "Zen: Level " + (this.max_targets - 1), "#FFEEEE", 1.2, .99);
                         text.body.velocity.y *= -1;
                         game.world.bringToTop(text);
                         this.fade_list.push(text);
@@ -441,7 +428,7 @@
                         let tmp_obj = {};
                         tmp_obj.x = this.x_start + (this.x_end - this.x_start) / 2;
                         tmp_obj.y = this.y_start + (this.y_end - this.y_start) / 2 - 20;
-                        this.fade_list.push(this.make_score_text(tmp_obj, "Bonus! +" + bonus_score, "#DDEFFF", 1.25));
+                        this.fade_list.push(this.make_score_text(tmp_obj, "Bonus! +" + bonus_score, "#DDEFFF", .9));
                     }
                 }
 
@@ -450,8 +437,18 @@
                     let tmp_obj = {};
                     tmp_obj.x = this.score_text.x + this.score_text.width / 2 + 45;
                     tmp_obj.y = this.score_text.y + this.score_text.height / 2 - 15;
-                    this.fade_list.push(this.make_score_text(tmp_obj, "+" + total_add, "#AABBFF", 1, .99));
+                    this.fade_list.push(this.make_score_text(tmp_obj, "+" + total_add, "#AABBFF", .75, .99));
                 }
+
+                // Handle cursor emission adjustments
+                this.emitter_cursor.width = 1;
+                this.emitter_cursor.height = 1;
+                this.emitter_cursor.x = -1000;
+                this.emitter_cursor.y = -1000;
+                this.touch.x = -1000;
+                this.touch.y = -1000;
+                this.touch_start.x = -1000;
+                this.touch_start.y = -1000;
             }
 
             // Checks if line is crossing over circle of object.
