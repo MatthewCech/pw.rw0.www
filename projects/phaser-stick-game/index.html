@@ -35,6 +35,7 @@
 
                 // Actual ctor content here.
                 this.player = null;
+                this.playerDanergous = false;
                 this.down_triggered = false;
                 this.emitter_hit_effect = null;
                 this.emission_reset = 5;
@@ -61,6 +62,9 @@
                 this.collidables = [];   // Anything that is a collidable entity that you wish to collide with but NOT destroy. Likely immovable.
                 this.spawn_blocks = [];  // Any block that was spawned withthe spawnblock function
                 this.destructables = []; // Destructable pieces of the environment
+
+
+                this.testBox = null;
             }
 
             // Configuration goes here. This is called first after construction.
@@ -74,7 +78,7 @@
                 game.load.spritesheet('block', 'resources/assets/Block.png', 32, 32);
 
                 // Static images
-                game.load.image('box', 'resources/assets/Box.png')
+                game.load.image('box', 'resources/assets/box.png')
                 // Game load audio
                 //game.load.audio('music', 'resources/assets/Fighting Man - DJ Pone & Drixxxe - (The Transporter).mp3')
             }
@@ -226,7 +230,15 @@
                 this.emitter_hit_effect = game.add.emitter(0, 0, 1000);
                 this.emitter_hit_effect.makeParticles('block');
 
-                game.add.sprite(Math.random() * (game.width - 32), 100, name);
+                // TEST BOX
+                let box = game.add.sprite(Math.random() * (game.width - 32), 100, 'box');
+                box.enableBody = true;
+                game.physics.enable(box, Phaser.Physics.ARCADE);
+                box.body.gravity.y = this.player.body.gravity.y;
+                box.scale.setTo(2, 2);
+                box.smoothed = false;
+                this.testBox = box;
+                this.destructables.push(box);
             }
             
 
@@ -239,6 +251,8 @@
             update() {
                 // Handle collisions
                 game.physics.arcade.collide(this.player, this.collidables);
+                game.physics.arcade.collide(this.player, this.testBox);
+                game.physics.arcade.collide(this.destructables, this.collidables);
 
                 // Handle input and Movement of player
                 this.handePlayerMovement();
