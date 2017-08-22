@@ -46,9 +46,10 @@
                 this.move_speed = 500;
                 this.punch_speed = 2250;
                 this.slide_speed = 1000;
+                this.down_speed = 1000;
                 this.jump_speed = 1200;
                 this.jump_punch_speed = 800;
-                this.down_speed = 1000;
+                this.jump_trigger = false;
                 this.punch_right_trigger = false;
                 this.punch_left_trigger = false;
                 this.punch_up_trigger = false;
@@ -56,9 +57,10 @@
                 this.slide_trigger = false;
                 this.slide_visual_trigger = false;
                 this.beat_per_sec =  97/60 //BPM is like... 97, tho 194 works well too because hi-hats.
-                this.environment = [];
-                this.collidables = [];
-                this.spawn_blocks = [];
+                this.environment = [];   // Non-collidable environment pieces.
+                this.collidables = [];   // Anything that is a collidable entity that you wish to collide with but NOT destroy. Likely immovable.
+                this.spawn_blocks = [];  // Any block that was spawned withthe spawnblock function
+                this.destructables = []; // Destructable pieces of the environment
             }
 
             // Configuration goes here. This is called first after construction.
@@ -71,6 +73,8 @@
                 game.load.spritesheet('rock 2', 'resources/assets/Grassy Rock 2.png', 32, 32);
                 game.load.spritesheet('block', 'resources/assets/Block.png', 32, 32);
 
+                // Static images
+                game.load.image('box', 'resources/assets/Box.png')
                 // Game load audio
                 //game.load.audio('music', 'resources/assets/Fighting Man - DJ Pone & Drixxxe - (The Transporter).mp3')
             }
@@ -128,8 +132,18 @@
 
                     // Place the vertical column of the block.
                     let ypos = game.height - height_offset;
-                    for(let j = ypos; j < game.height + 64; j += 32)
-                        this.placeBlockAt(i * 32, j, true);
+                    let block = game.add.sprite(i * 32, ypos, 'block');
+                    block.scale.y = ((game.height + 64) - ypos) / 32;
+                    game.physics.enable(block, Phaser.Physics.ARCADE);
+                    block.enableBody = true;
+                    block.body.collideWorldBounds = true;
+                    block.body.immovable = true;
+                    block.body.moves = false;
+                    this.collidables.push(block);
+
+                    // This was the old technique for handling terrain generation, which generated WAYYY to many sprites.
+                    //for(let j = ypos; j < game.height + 64; j += 32)
+                      //  this.placeBlockAt(i * 32, j, true);
 
                     // Place grass and other stuff. Rocks are a bit messy right now.
                     let accent = this.rand(0, 20);
@@ -211,6 +225,8 @@
                 // Initialize effects
                 this.emitter_hit_effect = game.add.emitter(0, 0, 1000);
                 this.emitter_hit_effect.makeParticles('block');
+
+                game.add.sprite(Math.random() * (game.width - 32), 100, name);
             }
             
 
@@ -228,8 +244,179 @@
                 this.handePlayerMovement();
 
                 // Add effects
+                this.handlePlayerVFX();
+
+                // Call draw upkeep
+                this.draw(); // Should be called last.
+            }
+
+            // Handles the movement of the player based on keyboard inputs. Inputs as follows:
+            // 
+            // W/Space      - Jump
+            // Up           - Uppercut
+            // Left         - Punch left
+            // Right        - Punch right
+            // A            - Move left
+            // D            - Move right
+            // S/Down       - Force Fall (TODO: Slide?)
+            handePlayerMovement() {
+                // Start with punching. Punching takes top priority, because it is a combat input. 
+                // We allow this to override things, and keep track of if we punched or not this frame
+                // as a result.
+                let punched = false;
+                let decay = this.resistance_walk;
+
+                // Right punch
+                if(game.input.keyboard.isDown(Phaser.Keyboard.RIGHT)) {
+                    punched = true;
+                    if(this.punch_right_trigger == false) {
+                        this.player.animations.play('punch_right');
+                        this.punch_right_trigger = true;
+                        this.player.body.velocity.x = this.punch_speed;
+                    }
+                } else {
+                    this.punch_right_trigger = false;
+                }
+
+                // Left punch
+                if(game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
+                    punched = true;
+                    if(this.punch_left_trigger == false) {
+                        this.player.animations.play('punch_left');
+                        this.punch_left_trigger = true;
+                        this.player.body.velocity.x = -this.punch_speed;
+                    }
+                } else {
+                    this.punch_left_trigger = false;
+                }
+
+
+                // We then move on to jumping and dodging based actions, because these we want to be very
+                // responsive. These are then processed, with the forced falling coming after the jumping
+                // to ensure we are able to have more control of the situation.
+                let pressingDown = false;
+                // Forced falling
+                if(game.input.keyboard.isDown(Phaser.Keyboard.S)
+                || game.input.keyboard.isDown(Phaser.Keyboard.DOWN)) {
+                    pressingDown = true;
+                    if(this.player.body.blocked.down == false && this.player.body.touching.down == false) {
+                        this.player.body.velocity.y = this.down_speed;   
+                    }
+                }
+
+                // Jumping
+                if(pressingDown == false)
+                    if(game.input.keyboard.isDown(Phaser.Keyboard.W) 
+                    || game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR)) {
+                        if(this.player.body.blocked.down == true || this.player.body.touching.down == true) {
+                            this.player.body.velocity.y = -this.jump_speed;
+                        }
+                    }
+
+
+
+
+                // This is handling the uppercut so that it can occur in the air, but requires people to
+                // hit the ground before going back up.
+                if(game.input.keyboard.isDown(Phaser.Keyboard.UP)) {
+                    if(this.punch_up_trigger == false) {
+                        this.punch_up_trigger = true;
+                        this.punch_up_visual_trigger = false;
+                        this.player.body.velocity.y = -this.jump_punch_speed;
+                        this.player.body.velocity.x = this.player.body.velocity.x * .75;
+                    }
+                    else {
+                        this.punch_up_visual_trigger = true;
+                    }
+                }
+                else if(this.player.body.blocked.down == true || this.player.body.touching.down == true) {
+                    this.punch_up_trigger = false;
+                    this.punch_up_visual_trigger = false;
+                }
+
+
+                // Sliding is something you can only do on the ground. You have to take your finger off
+                // the key to do it again, but that doesn't stop you from sliding at basically any point
+                // in time when you're doing other things, including punching.
                 if(this.player.body.blocked.down == true || this.player.body.touching.down == true) {
-                    if(game.input.keyboard.isDown(Phaser.Keyboard.UP) || game.input.keyboard.isDown(Phaser.Keyboard.W))
+                    if(game.input.keyboard.isDown(Phaser.Keyboard.S)
+                    || game.input.keyboard.isDown(Phaser.Keyboard.DOWN)) {
+
+                        decay = this.resistance_slide;
+                        punched = true;
+
+                        if(this.player.body.velocity.x < 60 && this.player.body.velocity.x > -60)
+                        {
+                            //this.player.body.velocity.x = 0;
+                            this.player.animations.play('idle');
+                        }
+
+                        if(this.slide_trigger == false)
+                        {
+                            if(game.input.keyboard.isDown(Phaser.Keyboard.D)
+                            || game.input.keyboard.isDown(Phaser.Keyboard.RIGHT)) {
+                                this.slide_trigger = true;
+                                this.player.body.velocity.x = this.slide_speed;
+                                this.player.animations.play('fall_right');
+                            }
+                            else if(game.input.keyboard.isDown(Phaser.Keyboard.A)
+                            || game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
+                                this.slide_trigger = true;
+                                this.player.body.velocity.x = -this.slide_speed;
+                                this.player.animations.play('fall_left');
+                            }
+                        }
+                    }
+                    else {
+                        this.slide_trigger = false;
+                    }
+                }
+
+                // Playing animations for moving to the left and right - please note that punching
+                // overrides this pretty hardcore, so we only do it if we *haven't* punched yet.
+                // Otherwise, we're good to go.
+                if(punched == false) {    
+                    if(game.input.keyboard.isDown(Phaser.Keyboard.D)) {
+                        if(this.player.body.blocked.down == true || this.player.body.touching.down == true)
+                            this.player.animations.play('walk_right');
+                        this.player.body.velocity.x = this.move_speed;
+                    }
+                    else if(game.input.keyboard.isDown(Phaser.Keyboard.A)) {
+                        if(this.player.body.blocked.down == true || this.player.body.touching.down == true)
+                            this.player.animations.play('walk_left');
+                        this.player.body.velocity.x = -this.move_speed;
+                    } else {
+                            this.player.animations.play('idle');
+                    }
+
+                    // If we're moving vertically up...
+                    if(this.player.body.velocity.y < -1) {
+                        if(this.player.body.blocked.down == false)
+                            this.player.animations.play('jump_left');
+
+                        if(this.player.body.velocity.x > 0)
+                            if(this.player.body.blocked.down == false)
+                                this.player.animations.play('jump_right');
+                    } 
+                    // If we're moving vertically down...
+                    else if (this.player.body.velocity.y > 1) {
+                        if(this.player.body.blocked.down == false || this.player.body.touching.down == false)
+                            this.player.animations.play('fall_left');
+
+                        if(this.player.body.velocity.x > 0)
+                            if(this.player.body.blocked.down == false || this.player.body.touching.down == false)
+                                this.player.animations.play('fall_right');
+                    }
+                }
+
+                // Finally, we slow player over time.
+                this.player.body.velocity.x *= decay;
+            }
+
+
+            handlePlayerVFX() {
+                if(this.player.body.blocked.down == true || this.player.body.touching.down == true) {
+                    if(game.input.keyboard.isDown(Phaser.Keyboard.W))
                     {
                         if(!game.input.keyboard.isDown(Phaser.Keyboard.DOWN)) {
                             let life = this.rand(400, 1000);
@@ -372,168 +559,7 @@
                     this.down_triggered = false;
                 }
 
-                // Call draw upkeep
-                this.draw(); // Should be called last.
             }
-
-            // Handles the movement of the player based on keyboard inputs. Inputs as follows:
-            // 
-            // W/Space      - Jump
-            // Up           - Uppercut
-            // Left         - Punch left
-            // Right        - Punch right
-            // A            - Move left
-            // D            - Move right
-            // S/Down       - Force Fall (TODO: Slide?)
-            handePlayerMovement() {
-                // Start with punching. Punching takes top priority, because it is a combat input. 
-                // We allow this to override things, and keep track of if we punched or not this frame
-                // as a result.
-                let punched = false;
-                let decay = this.resistance_walk;
-
-                // Right punch
-                if(game.input.keyboard.isDown(Phaser.Keyboard.RIGHT)) {
-                    punched = true;
-                    if(this.punch_right_trigger == false) {
-                        this.player.animations.play('punch_right');
-                        this.punch_right_trigger = true;
-                        this.player.body.velocity.x = this.punch_speed;
-                    }
-                } else {
-                    this.punch_right_trigger = false;
-                }
-
-                // Left punch
-                if(game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
-                    punched = true;
-                    if(this.punch_left_trigger == false) {
-                        this.player.animations.play('punch_left');
-                        this.punch_left_trigger = true;
-                        this.player.body.velocity.x = -this.punch_speed;
-                    }
-                } else {
-                    this.punch_left_trigger = false;
-                }
-
-
-                // We then move on to jumping and dodging based actions, because these we want to be very
-                // responsive. These are then processed, with the forced falling coming after the jumping
-                // to ensure we are able to have more control of the situation.
-
-                // Jumping
-                if(this.player.body.blocked.down == true || this.player.body.touching.down == true) {
-                    if(game.input.keyboard.isDown(Phaser.Keyboard.W) 
-                    || game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR)) {
-                        this.player.body.velocity.y = -this.jump_speed;
-                    }
-                }
-
-                // Forced falling
-                if(game.input.keyboard.isDown(Phaser.Keyboard.S)
-                || game.input.keyboard.isDown(Phaser.Keyboard.DOWN)) {
-                    if(this.player.body.blocked.down == false && this.player.body.touching.down == false)
-                        this.player.body.velocity.y = this.down_speed;   
-                }
-
-
-                // This is handling the uppercut so that it can occur in the air, but requires people to
-                // hit the ground before going back up.
-                if(game.input.keyboard.isDown(Phaser.Keyboard.UP)) {
-                    if(this.punch_up_trigger == false) {
-                        this.punch_up_trigger = true;
-                        this.punch_up_visual_trigger = false;
-                        this.player.body.velocity.y = -this.jump_punch_speed;
-                        this.player.body.velocity.x = this.player.body.velocity.x * .75;
-                    }
-                    else {
-                        this.punch_up_visual_trigger = true;
-                    }
-                }
-                else if(this.player.body.blocked.down == true || this.player.body.touching.down == true) {
-                    this.punch_up_trigger = false;
-                    this.punch_up_visual_trigger = false;
-                }
-
-
-                // Sliding is something you can only do on the ground. You have to take your finger off
-                // the key to do it again, but that doesn't stop you from sliding at basically any point
-                // in time when you're doing other things, including punching.
-                if(this.player.body.blocked.down == true || this.player.body.touching.down == true) {
-                    if(game.input.keyboard.isDown(Phaser.Keyboard.S)
-                    || game.input.keyboard.isDown(Phaser.Keyboard.DOWN)) {
-
-                        decay = this.resistance_slide;
-                        punched = true;
-
-                        if(this.player.body.velocity.x < 60 && this.player.body.velocity.x > -60)
-                        {
-                            //this.player.body.velocity.x = 0;
-                            this.player.animations.play('idle');
-                        }
-
-                        if(this.slide_trigger == false)
-                        {
-                            if(game.input.keyboard.isDown(Phaser.Keyboard.D)
-                            || game.input.keyboard.isDown(Phaser.Keyboard.RIGHT)) {
-                                this.slide_trigger = true;
-                                this.player.body.velocity.x = this.slide_speed;
-                                this.player.animations.play('fall_right');
-                            }
-                            else if(game.input.keyboard.isDown(Phaser.Keyboard.A)
-                            || game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
-                                this.slide_trigger = true;
-                                this.player.body.velocity.x = -this.slide_speed;
-                                this.player.animations.play('fall_left');
-                            }
-                        }
-                    }
-                    else {
-                        this.slide_trigger = false;
-                    }
-                }
-
-                // Playing animations for moving to the left and right - please note that punching
-                // overrides this pretty hardcore, so we only do it if we *haven't* punched yet.
-                // Otherwise, we're good to go.
-                if(punched == false) {    
-                    if(game.input.keyboard.isDown(Phaser.Keyboard.D)) {
-                        if(this.player.body.blocked.down == true || this.player.body.touching.down == true)
-                            this.player.animations.play('walk_right');
-                        this.player.body.velocity.x = this.move_speed;
-                    }
-                    else if(game.input.keyboard.isDown(Phaser.Keyboard.A)) {
-                        if(this.player.body.blocked.down == true || this.player.body.touching.down == true)
-                            this.player.animations.play('walk_left');
-                        this.player.body.velocity.x = -this.move_speed;
-                    } else {
-                            this.player.animations.play('idle');
-                    }
-
-                    // If we're moving vertically up...
-                    if(this.player.body.velocity.y < -1) {
-                        if(this.player.body.blocked.down == false)
-                            this.player.animations.play('jump_left');
-
-                        if(this.player.body.velocity.x > 0)
-                            if(this.player.body.blocked.down == false)
-                                this.player.animations.play('jump_right');
-                    } 
-                    // If we're moving vertically down...
-                    else if (this.player.body.velocity.y > 1) {
-                        if(this.player.body.blocked.down == false || this.player.body.touching.down == false)
-                            this.player.animations.play('fall_left');
-
-                        if(this.player.body.velocity.x > 0)
-                            if(this.player.body.blocked.down == false || this.player.body.touching.down == false)
-                                this.player.animations.play('fall_right');
-                    }
-                }
-
-                // Finally, we slow player over time.
-                this.player.body.velocity.x *= decay;
-            }
-
             // Draw code here!
             draw() {
             }
