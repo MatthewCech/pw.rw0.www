@@ -39,7 +39,7 @@
 			tile_base(xpos, ypos, name, callback, exemptFromTiles) {
 				let new_tile = game.add.sprite(xpos, ypos, name);
 				new_tile.smoothed = false;
-				new_tile.scale.setTo(.5, .5);
+				new_tile.scale.setTo(.75, .75);
 				new_tile.inputEnabled = true;
 
 				if(callback)
@@ -92,6 +92,7 @@
 				game.load.spritesheet('g1', 'resources/assets/sprites/Grassy Rocks 1.png', 32,32);
 				game.load.spritesheet('g2', 'resources/assets/sprites/Grass 1.png', 32,32);
 				game.load.spritesheet('g3', 'resources/assets/sprites/Grass 2.png', 32,32);
+				game.load.spritesheet('t1', 'resources/assets/sprites/Tall Bush 1.png', 32,64);
 				game.load.image('tile', 'resources/assets/sprites/tile.png');
 			}
 			  
@@ -118,6 +119,11 @@
 				if(val >= low && val <= high) {
 					let item = this.make_noncolldiable(xpos, ypos, name, true);
 					item.x += x_drift;
+					
+					if(Math.random() < .5) {
+						item.scale.x *= -1
+						item.x += this.tile_width
+					}
 				}
 			}
 
@@ -139,11 +145,12 @@
 						this.make_block(i, vert);
 
 					// Handle grass
-					rnd = Math.floor(Math.random() * 25);
-					this.place_rng('g1', rnd, 0, 0, 0, i, init_height - this.tile_width);
-					this.place_rng('g2', rnd, 2, 7, 20, i, init_height - this.tile_width);
-					this.place_rng('g3', rnd, 5, 12, 20, i, init_height - this.tile_width);
-					this.place_rng('g3', rnd, 8, 14, 20, i, init_height - this.tile_width);
+					rnd = Math.floor(Math.random() * 23);
+					this.place_rng('g1', rnd, 0, 3, 10, i, init_height - this.tile_width);
+					this.place_rng('g2', rnd, 3, 7, 80, i, init_height - this.tile_width);
+					this.place_rng('g3', rnd, 5, 12, 80, i, init_height - this.tile_width);
+					this.place_rng('g3', rnd, 9, 14, 90, i, init_height - this.tile_width);
+					this.place_rng('t1', rnd, 13, 17, 40, i, init_height - this.tile_width * 2);
 				}
 			}
 
