@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<!-- meta tags -->
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<!-- external links -->
+		<script type="text/javascript" src="resources/js/phaser.min.js"></script>
+
+		<!-- page config -->
+		<title>Testing horizontal world gen</title>
+	</head>
+	<style type="text/css">
+		body {
+			margin: 0px;
+			padding: 0px;
+		}
+	</style>
+	<body>
+		<script>
+
+		  ///////////////////
+		 // Create Levels //
+		///////////////////
+		// Main level
+		class Level1 extends Phaser.State {
+			// ===== Phaser Functions ===== //
+			// First call for constructor.
+			constructor(game){
+			  super(game); 
+			  this.tiles = [];
+			  this.unregistered_tiles = [];
+			  this.environment = [];
+			  this.tile_width = 32;
+			}
+
+			// Makes a piece of the world, and adds it to the list.
+			tile_base(xpos, ypos, name, callback, exemptFromTiles) {
+				let new_tile = game.add.sprite(xpos, ypos, name);
+				new_tile.smoothed = false;
+				new_tile.scale.setTo(.5, .5);
+				new_tile.inputEnabled = true;
+
+				if(callback)
+					new_tile.events.onInputDown.add(callback, this);
+
+				// Dynamically create jagged 3D array
+				if(!this.environment[new_tile.x])
+					this.environment[new_tile.x] = [];
+
+				// Kill items already present
+				if(!this.environment[new_tile.x][new_tile.y])
+					this.environment[new_tile.x][new_tile.y] = []
+					
+				this.environment[new_tile.x][new_tile.y].push(new_tile);
+				this.tile_width = new_tile.width;
+
+				if(exemptFromTiles != null && exemptFromTiles == true)
+					this.tiles.push(new_tile);
+				else
+					this.unregistered_tiles.push(new_tile);
+
+				return new_tile;
+			}
+
+			make_block(xpos, ypos) {
+				let xloc = xpos - xpos % this.tile_width;
+				let yloc = ypos - ypos % this.tile_width;
+
+				let tile = this.tile_base(xloc, yloc , 'tile', function(obj_clicked) {
+					if(game.input.activePointer.rightButton.isDown)
+					obj_clicked.kill();
+				});
+			}
+
+			make_noncolldiable(xpos, ypos, name) {
+				let xloc = xpos - xpos % this.tile_width;
+				let yloc = ypos - ypos % this.tile_width;
+
+				let item = this.tile_base(xloc, yloc, name, function(obj_clicked) {
+					if(game.input.activePointer.rightButton.isDown)
+					obj_clicked.kill();
+				}, true);
+
+				item.animations.add('idle', [0, 1, 2, 3], 1, true).play();
+				return item;
+			}
+
+			// Configuration goes here. This is called first after construction.
+			preload() {
+				game.load.spritesheet('g1', 'resources/assets/sprites/Grassy Rocks 1.png', 32,32);
+				game.load.spritesheet('g2', 'resources/assets/sprites/Grass 1.png', 32,32);
+				game.load.spritesheet('g3', 'resources/assets/sprites/Grass 2.png', 32,32);
+				game.load.image('tile', 'resources/assets/sprites/tile.png');
+			}
+			  
+			// Put things to be regularly initialized once here. 
+			create() {
+				// Global setup - called once
+				game.physics.startSystem(Phaser.Physics.ARCADE);
+				game.stage.backgroundColor = "#222222";
+				game.stage.smoothed = false;
+
+				// Handle click-input setup
+				game.input.mouse.capture = true;
+				game.canvas.oncontextmenu = function (e) { e.preventDefault(); }
+
+				// Call last - can be multiple times
+				this.custom_reinit(); // Should be called last.
+			}
+			
+			// Randomly places. Inclusive.
+			place_rng(name, val, low, high, dft_val, xpos, ypos) {
+				let drift = this.tile_width * (dft_val / 100.0);
+				let x_drift = Math.floor((Math.random() * drift) - drift / 2);
+
+				if(val >= low && val <= high) {
+					let item = this.make_noncolldiable(xpos, ypos, name, true);
+					item.x += x_drift;
+				}
+			}
+
+			generic_generate() {
+				let last = 0;
+				let init_height = 
+					Math.floor(game.height / 1.5) - (game.height / 1.5 % this.tile_width);
+
+				for(let i = -32; i < game.width + 64; i += this.tile_width) {
+
+					// Handle initial placement
+					let rnd = Math.floor(Math.random() * 5);
+					if(rnd == 0 && last != 1) init_height -= this.tile_width;
+					if(rnd == 1 && last != 0) init_height += this.tile_width;
+
+					last = rnd;
+					this.make_block(i, init_height);
+					for(let vert = init_height; vert < game.height + 64; vert += this.tile_width)
+						this.make_block(i, vert);
+
+					// Handle grass
+					rnd = Math.floor(Math.random() * 25);
+					this.place_rng('g1', rnd, 0, 0, 0, i, init_height - this.tile_width);
+					this.place_rng('g2', rnd, 2, 7, 20, i, init_height - this.tile_width);
+					this.place_rng('g3', rnd, 5, 12, 20, i, init_height - this.tile_width);
+					this.place_rng('g3', rnd, 8, 14, 20, i, init_height - this.tile_width);
+				}
+			}
+
+			// Initialization (and by extention re-initialization or restart code here.)
+			custom_reinit() {
+				// Clean up world lists
+				while(this.tiles.length > 0)
+					this.tiles.shift().kill();
+				while(this.unregistered_tiles.length > 0)
+					this.tiles.shift().kill();
+				this.environment = [];
+
+				this.generic_generate();
+			}
+			
+			snap_t(xpos) {
+				return xpos - (xpos%this.tile_width);
+			}
+
+			// Called once per loop.
+			update() {
+				if(game.input.activePointer.leftButton.isDown) 
+					this.make_block(game.input.activePointer.x, game.input.activePointer.y);
+			
+				if(game.input.activePointer.rightButton.isDown) {
+					let xpos = this.snap_t(game.input.activePointer.x);
+					let ypos = this.snap_t(game.input.activePointer.y);
+					if(this.environment[xpos])
+						if(this.environment[xpos][ypos]) {
+							while(this.environment[xpos][ypos].length > 0)
+								this.environment[xpos][ypos].shift().kill();
+						}
+
+				}
+
+
+				this.custom_draw(); // Should be called last.
+			}
+
+			// Draw code here!
+			custom_draw() {
+			}
+
+
+		}
+
+		  //////////////////
+		 // Phaser Setup //
+		//////////////////
+		// Get game object and add levels. Note: This must come last.
+		// Initialize the phaser window
+		var game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '');  
+		game.state.add('level_main', new Level1(game));
+		game.state.start('level_main');
+
+		</script>
+	</body>
+</html>
