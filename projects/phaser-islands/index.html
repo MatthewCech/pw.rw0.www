@@ -32,7 +32,8 @@
 			  this.tiles = [];
 			  this.unregistered_tiles = [];
 			  this.environment = [];
-			  this.tile_width = 32;
+			  this.surface_line = [];
+			  this.tile_side = 32;
 			}
 
 			// Makes a piece of the world, and adds it to the list.
@@ -54,35 +55,35 @@
 					this.environment[new_tile.x][new_tile.y] = []
 					
 				this.environment[new_tile.x][new_tile.y].push(new_tile);
-				this.tile_width = new_tile.width;
+				this.tile_side = new_tile.width;
 
-				if(exemptFromTiles != null && exemptFromTiles == true)
+				if(exemptFromTiles != null && exemptFromTiles == false) {
+					new_tile.is_ground = true;
 					this.tiles.push(new_tile);
-				else
+				} else {
 					this.unregistered_tiles.push(new_tile);
+				}
 
 				return new_tile;
 			}
 
-			makeHole() {
-				let hole = {}
-				hole.x = randpos(this.snap_t(math.random() * game.width));
-				hole.y = randpos(this.snap_t(math.random() * game.height));
-			}
 
+			// Creates a tile somewhere in the world, snapped to the grid.
 			make_block(xpos, ypos) {
-				let xloc = xpos - xpos % this.tile_width;
-				let yloc = ypos - ypos % this.tile_width;
+				let xloc = xpos - xpos % this.tile_side;
+				let yloc = ypos - ypos % this.tile_side;
 
 				let tile = this.tile_base(xloc, yloc , 'tile', function(obj_clicked) {
 					if(game.input.activePointer.rightButton.isDown)
 					obj_clicked.kill();
-				});
+				}, false);
+
+				return tile;
 			}
 
 			make_noncolldiable(xpos, ypos, name) {
-				let xloc = xpos - xpos % this.tile_width;
-				let yloc = ypos - ypos % this.tile_width;
+				let xloc = xpos - xpos % this.tile_side;
+				let yloc = ypos - ypos % this.tile_side;
 
 				let item = this.tile_base(xloc, yloc, name, function(obj_clicked) {
 					if(game.input.activePointer.rightButton.isDown)
@@ -117,9 +118,48 @@
 				this.custom_reinit(); // Should be called last.
 			}
 			
+			// Initialization (and by extention re-initialization or restart code here.)
+			custom_reinit() {
+				// Clean up world lists
+				while(this.tiles.length > 0)
+					this.tiles.shift().kill();
+				while(this.unregistered_tiles.length > 0)
+					this.unregistered_tiles.shift().kill();
+				this.environment = [];
+
+				this.generic_generate();
+				let cave = this.make_cave();
+				cave.dig(0, 0);
+				cave.dig(0, 0);
+				
+				for(let i = 0; i < (game.width / 400); i += 1)
+				{
+					let hole = this.make_hole();
+					let loops = 4 * (this.game.width / 600);
+					let side_bias = Math.floor(Math.random() * 4 - 2) * 35;
+					while(loops > 0) {
+						hole.dig(0, -50);
+						loops -= 1;
+					}
+				}
+
+				this.recalculate_surface()
+				this.palce_plants();
+				/*
+				let hole = this.make_hole();
+				let loops = (hole.uppermost - this.snap_t(game.height / 2)) / 32;
+				let side_bias = Math.random() * 160 - 80;
+				while(loops > 0) {
+					console.log(hole.uppermost);
+					hole.dig(side_bias, -1 * (80 - hole.uppermost / game.height * 80));
+					loops -= 1;
+				}
+				*/
+			}
+
 			// Randomly places. Inclusive.
 			place_rng(name, val, low, high, dft_val, xpos, ypos) {
-				let drift = this.tile_width * (dft_val / 100.0);
+				let drift = this.tile_side * (dft_val / 100.0);
 				let x_drift = Math.floor((Math.random() * drift) - drift / 2);
 
 				if(val >= low && val <= high) {
@@ -128,52 +168,76 @@
 
 					if(Math.random() < .5) {
 						item.scale.x *= -1
-						item.x += this.tile_width;
+						item.x += this.tile_side;
 					}
 				}
 			}
 
+			// Generates a world, with no holes.
 			generic_generate() {
 				let last = 0;
-				let init_height = 
-					Math.floor(game.height / 1.5) - (game.height / 1.5 % this.tile_width);
-
-				for(let i = -32; i < game.width + 64; i += this.tile_width) {
+				let init_height = Math.floor(game.height / 1.5) - (game.height / 1.5 % this.tile_side);
+				for(let i = -this.tile_side; i < game.width + this.tile_side * 2; i += this.tile_side) {
 
 					// Handle initial placement
-					let rnd = Math.floor(Math.random() * 5);
-					if(rnd == 0 && last != 1) init_height -= this.tile_width;
-					if(rnd == 1 && last != 0) init_height += this.tile_width;
+					let rnd = Math.floor(Math.random() * 4);
+					if(rnd == 0 && last != 1) init_height -= this.tile_side;
+					if(rnd == 1 && last != 0) init_height += this.tile_side;
 
 					last = rnd;
-					this.make_block(i, init_height);
-					for(let vert = init_height; vert < game.height + 64; vert += this.tile_width)
+					let surface = this.make_block(i, init_height);
+					this.surface_line.push(surface);
+					for(let vert = init_height; vert < game.height + this.tile_side * 2; vert += this.tile_side)
 						this.make_block(i, vert);
 
-					// Handle grass
-					rnd = Math.floor(Math.random() * 23);
-					this.place_rng('g1', rnd, 0, 3, 10, i, init_height - this.tile_width);
-					this.place_rng('g2', rnd, 3, 7, 80, i, init_height - this.tile_width);
-					this.place_rng('g3', rnd, 5, 12, 80, i, init_height - this.tile_width);
-					this.place_rng('g3', rnd, 9, 14, 90, i, init_height - this.tile_width);
-					this.place_rng('t1', rnd, 13, 17, 40, i, init_height - this.tile_width * 2);
 				}
 			}
 
-			// Initialization (and by extention re-initialization or restart code here.)
-			custom_reinit() {
-				// Clean up world lists
-				while(this.tiles.length > 0)
-					this.tiles.shift().kill();
-				while(this.unregistered_tiles.length > 0)
-					this.tiles.shift().kill();
-				this.environment = [];
+			recalculate_surface() {
+				this.surface_line = [];
+				let y_init = (Math.floor(game.height / 1.5) - (game.height / 1.5 % this.tile_side)) 
+				           % this.tile_side;
 
-				this.generic_generate();
+				for(let i = -this.tile_side; i < game.width + this.tile_side * 2; i += this.tile_side) { 
+					for(let j = y_init; j < game.height + this.tile_side * 2; j += this.tile_side) {
+						let should_exit_early = false;
+						if(this.environment[i]) {
+							if(this.environment[i][j]) {
+								if(this.environment[i][j].length > 0) {
+									for(let k = 0; k < this.environment[i][j].length; ++k) {	
+										if(this.environment[i][j][k].is_ground) {
+											this.surface_line.push(this.environment[i][j][k]);
+											should_exit_early = true;
+											break;
+										}
+									}
+								}
+							}
+						}
+						if(should_exit_early)
+							break;
+					}
+				}
+			}
+
+			palce_plants() {
+				// Handle grasses and trees
+				for(let i = 0; i < this.surface_line.length; ++i) {
+					let xpos = this.surface_line[i].x;
+					let ypos = this.surface_line[i].y;
+
+					let rnd = Math.floor(Math.random() * 23);
+					this.place_rng('g1', rnd, 0, 3, 10, xpos, ypos - this.tile_side);
+					this.place_rng('g2', rnd, 3, 7, 80, xpos, ypos - this.tile_side);
+					this.place_rng('g3', rnd, 5, 12, 80, xpos, ypos - this.tile_side);
+					this.place_rng('g3', rnd, 9, 14, 90, xpos, ypos - this.tile_side);
+					this.place_rng('t1', rnd, 13, 17, 40, xpos, ypos - this.tile_side * 2);
+				}
 			}
 			
+			// Snap a value to a location on the grid.
 			snap_t(xpos) {
-				return xpos - (xpos % this.tile_width);
+				return xpos - (xpos % this.tile_side);
 			}
 
 			// Called once per loop.
@@ -192,7 +256,6 @@
 
 				}
 
-
 				this.custom_draw(); // Should be called last.
 			}
 
@@ -200,7 +263,206 @@
 			custom_draw() {
 			}
 
+			// Creates a cave object with a dig function on it.
+			make_cave() {
+				let cave = {}
 
+				// Get a random location in the world inside the tiles list,
+				// and use it as the start of a cave.
+				let index = Math.floor(Math.random() * this.surface_line.length);
+				cave.x = this.surface_line[index].x;
+				cave.y = this.surface_line[index].y;
+				cave.env = this.environment;
+				cave.tile_size = this.tile_side
+				cave.locations = [];
+				cave.uppermost = cave.y;
+
+				// Checks to see if we have blocks at the X and Y positions 
+				// specified by the arguments.
+				cave.at = function(xpos, ypos) {
+					if(cave.env[xpos]) 
+						if(cave.env[xpos][ypos])
+							if(cave.env[xpos][ypos].length > 0) {
+								cave.env[xpos][ypos].world_pos = {x:xpos, y:ypos};
+								return cave.env[xpos][ypos];
+							}
+
+					return null;
+				};
+
+				cave.above = cave.at(cave.uppermost.x, cave.uppermost.y - cave.tile_size);
+
+				// Removes the contents of a list, without knowing
+				// if the list exists first. (determines this while running)
+				cave.rem = function(list) {
+					if(list != null) {
+						let xpos = list.world_pos.x;
+						let ypos = list.world_pos.y;
+						let hasRemoved = false;
+						
+						while(list.length > 0){
+							list.shift().kill();
+							hasRemoved = true;
+						}
+
+						if(hasRemoved)
+							cave.locations.push({x:xpos, y:ypos});
+					}
+				}
+
+				// Dig out initial cave.
+				let init_x = cave.x;
+				let init_y = cave.y;
+				let last = -1;
+				cave.rem(cave.at(cave.x, cave.y))
+
+				for(let i = - this.tile_side; i < game.height + this.tile_side * 2; i += this.tile_side){
+					let rnd = Math.floor(Math.random() * 5);
+					if(rnd == 0 && last != 1) init_x -= this.tile_side;
+					if(rnd == 1 && last != 0) init_x += this.tile_side;
+					if(rnd == 2 && last != 3) init_y += this.tile_side;
+					if(rnd == 3 && last != 2) init_y += this.tile_side;
+					last = rnd;
+					cave.rem(cave.at(init_x, init_y));
+				}
+
+				// Digs a cave with the option of having a bias for 
+				// the random number generator. This will 
+				cave.dig = function(xBias, yBias) {
+					if(!xBias) xBias = 0;
+					if(!yBias) yBias = 0;
+
+					let cave_init_locations = cave.locations.length
+					for(let i = 0; i < cave_init_locations; ++i) {
+						let curr = cave.locations[i];
+						let x_rnd = Math.random() * 200 - 100 + xBias;
+						let y_rnd = Math.random() * 200 - 100 + yBias;
+						const deadzone = 20;
+						//console.log("dig vals: x:" + x_rnd + ", y:" + y_rnd);
+
+						if(x_rnd <= -50)
+							cave.rem(cave.at(curr.x - cave.tile_size, curr.y));
+						else if(x_rnd >= 50)
+							cave.rem(cave.at(curr.x + cave.tile_size, curr.y));
+						else if(x_rnd <= 0 - deadzone || x_rnd >= 0 + deadzone) {
+							cave.rem(cave.at(curr.x + cave.tile_size, curr.y));
+							cave.rem(cave.at(curr.x - cave.tile_size, curr.y));
+						}
+
+						if(y_rnd <= -50) {
+							if(cave.uppermost == curr.y)
+								cave.uppermost -= cave.tile_size;
+							cave.rem(cave.at(curr.x, curr.y - cave.tile_size));
+						}
+						else if(y_rnd >= 50)
+							cave.rem(cave.at(curr.x, curr.y + cave.tile_size));
+						else if(y_rnd <= 0 - deadzone || y_rnd >= 0 + deadzone) {
+							if(cave.uppermost == curr.y)
+								cave.uppermost -= cave.tile_size;
+							cave.rem(cave.at(curr.x, curr.y - cave.tile_size));
+							cave.rem(cave.at(curr.x, curr.y + cave.tile_size));
+						}
+					}
+
+					cave.above = cave.at(cave.uppermost.x, cave.uppermost.y - cave.tile_size);
+				};
+
+				return cave;
+			}
+
+			// Creates a hole object with a dig function on it.
+			make_hole() {
+				let hole = {}
+
+				// Get a random location in the world inside the tiles list,
+				// and use it as the start of a hole.
+				let index = Math.floor(Math.random() * this.tiles.length);
+				hole.x = this.tiles[index].x;
+				hole.y = this.tiles[index].y;
+				hole.env = this.environment;
+				hole.tile_size = this.tile_side
+				hole.locations = [];
+				hole.uppermost = hole.y;
+
+				// Checks to see if we have blocks at the X and Y positions 
+				// specified by the arguments.
+				hole.at = function(xpos, ypos) {
+					if(hole.env[xpos]) 
+						if(hole.env[xpos][ypos])
+							if(hole.env[xpos][ypos].length > 0) {
+								hole.env[xpos][ypos].world_pos = {x:xpos, y:ypos};
+								return hole.env[xpos][ypos];
+							}
+
+					return null;
+				};
+
+				hole.above = hole.at(hole.uppermost.x, hole.uppermost.y - hole.tile_size);
+
+				// Removes the contents of a list, without knowing
+				// if the list exists first. (determines this while running)
+				hole.rem = function(list) {
+					if(list != null) {
+						let xpos = list.world_pos.x;
+						let ypos = list.world_pos.y;
+						let hasRemoved = false;
+						
+						while(list.length > 0){
+							list.shift().kill();
+							hasRemoved = true;
+						}
+
+						if(hasRemoved)
+							hole.locations.push({x:xpos, y:ypos});
+					}
+				}
+
+				// Dig out initial hole.
+				hole.rem(hole.at(hole.x, hole.y))
+
+				// Digs a hole with the option of having a bias for 
+				// the random number generator. This will 
+				hole.dig = function(xBias, yBias) {
+					if(!xBias) xBias = 0;
+					if(!yBias) yBias = 0;
+
+					let hole_init_locations = hole.locations.length
+					for(let i = 0; i < hole_init_locations; ++i) {
+						let curr = hole.locations[i];
+						let x_rnd = Math.random() * 200 - 100 + xBias;
+						let y_rnd = Math.random() * 200 - 100 + yBias;
+						const deadzone = 20;
+						//console.log("dig vals: x:" + x_rnd + ", y:" + y_rnd);
+
+						if(x_rnd <= -50)
+							hole.rem(hole.at(curr.x - hole.tile_size, curr.y));
+						else if(x_rnd >= 50)
+							hole.rem(hole.at(curr.x + hole.tile_size, curr.y));
+						else if(x_rnd <= 0 - deadzone || x_rnd >= 0 + deadzone) {
+							hole.rem(hole.at(curr.x + hole.tile_size, curr.y));
+							hole.rem(hole.at(curr.x - hole.tile_size, curr.y));
+						}
+
+						if(y_rnd <= -50) {
+							if(hole.uppermost == curr.y)
+								hole.uppermost -= hole.tile_size;
+							hole.rem(hole.at(curr.x, curr.y - hole.tile_size));
+						}
+						else if(y_rnd >= 50)
+							hole.rem(hole.at(curr.x, curr.y + hole.tile_size));
+						else if(y_rnd <= 0 - deadzone || y_rnd >= 0 + deadzone) {
+							if(hole.uppermost == curr.y)
+								hole.uppermost -= hole.tile_size;
+							hole.rem(hole.at(curr.x, curr.y - hole.tile_size));
+							hole.rem(hole.at(curr.x, curr.y + hole.tile_size));
+						}
+					}
+
+					hole.above = hole.at(hole.uppermost.x, hole.uppermost.y - hole.tile_size);
+				};
+
+				return hole;
+			}
 		}
 
 		  //////////////////
@@ -208,7 +470,7 @@
 		//////////////////
 		// Get game object and add levels. Note: This must come last.
 		// Initialize the phaser window
-		var game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '');  
+		var game = new Phaser.Game(window.innerWidth,window.innerHeight,Phaser.AUTO,''); 
 		game.state.add('level_main', new Level1(game));
 		game.state.start('level_main');
 
