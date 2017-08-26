@@ -64,6 +64,12 @@
 				return new_tile;
 			}
 
+			makeHole() {
+				let hole = {}
+				hole.x = randpos(this.snap_t(math.random() * game.width));
+				hole.y = randpos(this.snap_t(math.random() * game.height));
+			}
+
 			make_block(xpos, ypos) {
 				let xloc = xpos - xpos % this.tile_width;
 				let yloc = ypos - ypos % this.tile_width;
@@ -119,10 +125,10 @@
 				if(val >= low && val <= high) {
 					let item = this.make_noncolldiable(xpos, ypos, name, true);
 					item.x += x_drift;
-					
+
 					if(Math.random() < .5) {
 						item.scale.x *= -1
-						item.x += this.tile_width
+						item.x += this.tile_width;
 					}
 				}
 			}
@@ -167,7 +173,7 @@
 			}
 			
 			snap_t(xpos) {
-				return xpos - (xpos%this.tile_width);
+				return xpos - (xpos % this.tile_width);
 			}
 
 			// Called once per loop.
