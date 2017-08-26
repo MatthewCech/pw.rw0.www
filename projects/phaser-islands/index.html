@@ -21,7 +21,7 @@
 			opacity: 0;
 			animation: fadein 1.5s forwards;
 			animation-delay: 0s;
-  		animation-timing-function: ease-in-out;
+			animation-timing-function: ease-in-out;
 		}
 
 		@keyframes fadein {
@@ -32,7 +32,7 @@
 	<body>
 		<script>
 
-		  ///////////////////
+			///////////////////
 		 // Create Levels //
 		///////////////////
 		// Main level
@@ -40,13 +40,18 @@
 			// ===== Phaser Functions ===== //
 			// First call for constructor.
 			constructor(game){
-			  super(game); 
-			  this.tiles = [];
-			  this.unregistered_tiles = [];
-			  this.environment = [];
-			  this.surface_line = [];
-			  this.tile_side = 32;
-			  this.loading_back = 0;
+				super(game); 
+				
+				// Storage
+				this.tiles = [];
+				this.unregistered_tiles = [];
+				this.environment = [];
+				this.surface_line = [];
+
+				// Objects and Data
+				this.tile_side = 32;
+				this.emitter_rain = null;
+				this.player = null;
 			}
 
 			// Makes a piece of the world, and adds it to the list.
@@ -76,6 +81,7 @@
 					new_tile.enableBody = true;
 					new_tile.body.allowRotation = false;
 					new_tile.body.immovable = true;
+					new_tile.body.friction.setTo(0, 0);
 					this.tiles.push(new_tile);
 				} else {
 					this.unregistered_tiles.push(new_tile);
@@ -107,7 +113,7 @@
 					obj_clicked.kill();
 				}, true);
 
-				item.animations.add('idle', [0, 1, 2, 3], 1, true).play();
+				item.animations.add('idle', [0, 1, 2, 3], Math.random() * 1 + 1, true).play();
 				return item;
 			}
 
@@ -126,8 +132,10 @@
 
 				// Other
 				game.load.image('tile', 'resources/assets/sprites/tile.png');
+				game.load.image('player', 'resources/assets/sprites/player.png');
+				game.load.image('raindrop', 'resources/assets/sprites/raindrop.png');
 			}
-			  
+				
 			// Put things to be regularly initialized once here. 
 			create() {
 				// Global setup - called once
@@ -145,18 +153,28 @@
 			
 			// Initialization (and by extention re-initialization or restart code here.)
 			custom_reinit() {
-				// Clean up world lists
+				// Clean up world lists and old objects.
 				while(this.tiles.length > 0)
 					this.tiles.shift().kill();
 				while(this.unregistered_tiles.length > 0)
 					this.unregistered_tiles.shift().kill();
-				this.environment = [];
 
+				this.environment = [];
+				this.tiles = [];
+				this.unregistered_tiles = [];
+
+				if(this.emitter_rain) 
+					this.emitter_rain.kill();
+				
+				// Generate landscape and then carve it out
 				this.generic_generate();
+
+				// Add a single large cave, no dig bias.
 				let cave = this.make_cave();
 				cave.dig(0, 0);
 				cave.dig(0, 0);
 				
+				// Add more holes depending on width. Consider this for caves too.
 				for(let i = 0; i < (game.width / 400); i += 1)
 				{
 					let hole = this.make_hole();
@@ -168,19 +186,69 @@
 					}
 				}
 
-				this.recalculate_surface()
+				// If there was a smoothing step, it would go here.
+
+				// Post-block placement for terrain, add more stuff.
+				this.recalculate_surface();
 				this.place_plants();
 				this.place_vines();
-				/*
-				let hole = this.make_hole();
-				let loops = (hole.uppermost - this.snap_t(game.height / 2)) / 32;
-				let side_bias = Math.random() * 160 - 80;
-				while(loops > 0) {
-					console.log(hole.uppermost);
-					hole.dig(side_bias, -1 * (80 - hole.uppermost / game.height * 80));
-					loops -= 1;
+
+				// Begin Rain.
+				this.emitter_rain = game.add.emitter(game.world.centerX, -10, 160);
+				this.emitter_rain.minParticleSpeed.setTo(-10, 250);
+				this.emitter_rain.maxParticleSpeed.setTo(10, 350);
+				this.emitter_rain.minParticleScale = 0.3;
+				this.emitter_rain.maxParticleScale = .6;
+				this.emitter_rain.width = game.width;
+				this.emitter_rain.gravity = 0;
+				this.emitter_rain.bounce.setTo(0.5, 0.5);
+				this.emitter_rain.angularDrag = 30;
+				this.emitter_rain.makeParticles('raindrop');
+				this.emitter_rain.start(false, 4000, 25);
+
+				// Add player
+				this.player = game.add.sprite(50, 50, 'player');
+				game.physics.enable(this.player, Phaser.Physics.ARCADE);
+				this.player.scale.setTo(.5, .5);
+				this.player.anchor.setTo(.5, .5);
+				this.player.enableBody = true;
+        this.player.body.gravity.y = 2200;
+        this.player.body.collideWorldBounds = true;
+        this.player.body.allowRotation = false;
+        this.player.body.friction.setTo(0, 0);
+			}
+
+			change(a, b) {
+			    console.log("WEH");
+			}
+
+			// Called once per loop.
+			update() {
+				game.physics.arcade.collide(this.player, this.tiles);
+				for(let i = 0; i < this.tiles.length; ++i) {
+					game.physics.arcade.collide(this.tiles[i], this.emitter_rain, this.change, null, this);
 				}
-				*/
+
+				if(game.input.activePointer.leftButton.isDown) 
+					this.make_block(game.input.activePointer.x, game.input.activePointer.y);
+			
+				if(game.input.activePointer.rightButton.isDown) {
+					let xpos = this.snap_t(game.input.activePointer.x);
+					let ypos = this.snap_t(game.input.activePointer.y);
+					if(this.environment[xpos])
+						if(this.environment[xpos][ypos]) {
+							while(this.environment[xpos][ypos].length > 0)
+								this.environment[xpos][ypos].shift().kill();
+						}
+
+				}
+
+				this.move_player();
+				this.custom_draw(); // Should be called last.
+			}
+
+			// Draw code here!
+			custom_draw() {
 			}
 
 			// Randomly places. Inclusive.
@@ -223,7 +291,7 @@
 			recalculate_surface() {
 				this.surface_line = [];
 				let y_init = (Math.floor(game.height / 1.5) - (game.height / 1.5 % this.tile_side)) 
-				           % this.tile_side;
+									 % this.tile_side;
 
 				for(let i = -this.tile_side; i < game.width + this.tile_side * 2; i += this.tile_side) { 
 					for(let j = y_init; j < game.height + this.tile_side * 2; j += this.tile_side) {
@@ -258,7 +326,7 @@
 			place_vines() {
 				let checks_until_vines = 0;
 				let y_init = (Math.floor(game.height / 1.5) - (game.height / 1.5 % this.tile_side)) 
-				           % this.tile_side;
+									 % this.tile_side;
 				
 				// Iterate over entire map
 				for(let i = -this.tile_side; i < game.width + this.tile_side * 2; i += this.tile_side) { 
@@ -291,7 +359,6 @@
 										if(add_vines) {
 
 											if(checks_until_vines > 0) {
-												console.log("weh");
 												checks_until_vines--;
 												break;
 											}
@@ -339,29 +406,6 @@
 			// Snap a value to a location on the grid.
 			snap_t(xpos) {
 				return xpos - (xpos % this.tile_side);
-			}
-
-			// Called once per loop.
-			update() {
-				if(game.input.activePointer.leftButton.isDown) 
-					this.make_block(game.input.activePointer.x, game.input.activePointer.y);
-			
-				if(game.input.activePointer.rightButton.isDown) {
-					let xpos = this.snap_t(game.input.activePointer.x);
-					let ypos = this.snap_t(game.input.activePointer.y);
-					if(this.environment[xpos])
-						if(this.environment[xpos][ypos]) {
-							while(this.environment[xpos][ypos].length > 0)
-								this.environment[xpos][ypos].shift().kill();
-						}
-
-				}
-
-				this.custom_draw(); // Should be called last.
-			}
-
-			// Draw code here!
-			custom_draw() {
 			}
 
 			// Creates a cave object with a dig function on it.
@@ -564,9 +608,37 @@
 
 				return hole;
 			}
+
+			move_player() {
+				this.player.body.velocity.x *= .8;
+
+				if(game.input.keyboard.isDown(Phaser.Keyboard.A))
+					if(!this.player.body.touching.left)
+						this.player.body.velocity.x = -180;
+				if(game.input.keyboard.isDown(Phaser.Keyboard.D))
+					if(!this.player.body.touching.right)
+						this.player.body.velocity.x = 180;
+
+			  if(game.input.keyboard.isDown(Phaser.Keyboard.LEFT))
+					if(!this.player.body.touching.left)
+						this.player.body.velocity.x = -1000;
+
+				if(game.input.keyboard.isDown(Phaser.Keyboard.RIGHT))
+					if(!this.player.body.touching.right)
+						this.player.body.velocity.x = 1000;
+
+				if(game.input.keyboard.isDown(Phaser.Keyboard.W))
+					if(this.player.body.blocked.down || this.player.body.touching.down)
+						this.player.body.velocity.y = -700;
+
+				if(game.input.keyboard.isDown(Phaser.Keyboard.UP))
+					if(this.player.body.blocked.down || this.player.body.touching.down)
+						this.player.body.velocity.y = -2000;
+			}
+
 		}
 
-		  //////////////////
+			//////////////////
 		 // Phaser Setup //
 		//////////////////
 		// Get game object and add levels. Note: This must come last.
