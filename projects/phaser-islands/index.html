@@ -13,8 +13,20 @@
 	</head>
 	<style type="text/css">
 		body {
+			background-color: #333333;
 			margin: 0px;
 			padding: 0px;
+		}
+		canvas {
+			opacity: 0;
+			animation: fadein 1.5s forwards;
+			animation-delay: 0s;
+  		animation-timing-function: ease-in-out;
+		}
+
+		@keyframes fadein {
+			0% { opacity: 0; }
+			100% { opacity: 1; }
 		}
 	</style>
 	<body>
@@ -34,6 +46,7 @@
 			  this.environment = [];
 			  this.surface_line = [];
 			  this.tile_side = 32;
+			  this.loading_back = 0;
 			}
 
 			// Makes a piece of the world, and adds it to the list.
@@ -59,6 +72,10 @@
 
 				if(exemptFromTiles != null && exemptFromTiles == false) {
 					new_tile.is_ground = true;
+					game.physics.enable(new_tile, Phaser.Physics.ARCADE);
+					new_tile.enableBody = true;
+					new_tile.body.allowRotation = false;
+					new_tile.body.immovable = true;
 					this.tiles.push(new_tile);
 				} else {
 					this.unregistered_tiles.push(new_tile);
@@ -96,10 +113,18 @@
 
 			// Configuration goes here. This is called first after construction.
 			preload() {
+				// G stands for grass content
 				game.load.spritesheet('g1', 'resources/assets/sprites/Grassy Rocks 1.png', 32,32);
 				game.load.spritesheet('g2', 'resources/assets/sprites/Grass 1.png', 32,32);
 				game.load.spritesheet('g3', 'resources/assets/sprites/Grass 2.png', 32,32);
+
+				// T stands for Tall/Tree content
 				game.load.spritesheet('t1', 'resources/assets/sprites/Tall Bush 1.png', 32,64);
+
+				// C stands for cave content
+				game.load.spritesheet('c1', 'resources/assets/sprites/vines.png', 32,32);
+
+				// Other
 				game.load.image('tile', 'resources/assets/sprites/tile.png');
 			}
 			  
@@ -144,7 +169,8 @@
 				}
 
 				this.recalculate_surface()
-				this.palce_plants();
+				this.place_plants();
+				this.place_vines();
 				/*
 				let hole = this.make_hole();
 				let loops = (hole.uppermost - this.snap_t(game.height / 2)) / 32;
@@ -193,6 +219,7 @@
 				}
 			}
 
+
 			recalculate_surface() {
 				this.surface_line = [];
 				let y_init = (Math.floor(game.height / 1.5) - (game.height / 1.5 % this.tile_side)) 
@@ -201,6 +228,7 @@
 				for(let i = -this.tile_side; i < game.width + this.tile_side * 2; i += this.tile_side) { 
 					for(let j = y_init; j < game.height + this.tile_side * 2; j += this.tile_side) {
 						let should_exit_early = false;
+
 						if(this.environment[i]) {
 							if(this.environment[i][j]) {
 								if(this.environment[i][j].length > 0) {
@@ -214,13 +242,86 @@
 								}
 							}
 						}
+
 						if(should_exit_early)
 							break;
 					}
 				}
 			}
 
-			palce_plants() {
+			valid_env(x, y) {
+				if(this.environment[x] && this.environment[x][y] && this.environment[x][y].length > 0)
+					return true;
+				return false;
+			}
+
+			place_vines() {
+				let checks_until_vines = 0;
+				let y_init = (Math.floor(game.height / 1.5) - (game.height / 1.5 % this.tile_side)) 
+				           % this.tile_side;
+				
+				// Iterate over entire map
+				for(let i = -this.tile_side; i < game.width + this.tile_side * 2; i += this.tile_side) { 
+					for(let j = 0; j < game.height + this.tile_side * 2; j += this.tile_side) {
+
+						// Confirm there is a block available to place on if we want.
+						if(this.valid_env(i, j)) {
+							for(let k = 0; k < this.environment[i][j].length; ++k) {	
+								if(this.environment[i][j][k].is_ground) {
+
+									// Now, we determine if we will add vines. Gets less likely
+									// as we try and add more.
+									let add_vines = true;
+									let vines_added = 0;
+									let xloc = i;
+									let yloc = j;
+
+									while(add_vines) {
+										if(this.valid_env(xloc, yloc + this.tile_side)){
+											for(let l = 0; l < this.environment[xloc][yloc + this.tile_side].length; ++l)
+												if(this.environment[xloc][yloc + this.tile_side][l].is_ground)
+													add_vines = false;
+										} else {
+											if(yloc + this.tile_side > game.height)
+												add_vines = false;
+										}
+
+										// At this point, we have determined we are allowed to add 
+										// vines at xloc, yloc + this.tile_side.
+										if(add_vines) {
+
+											if(checks_until_vines > 0) {
+												console.log("weh");
+												checks_until_vines--;
+												break;
+											}
+
+											// First, make sure nothing else is there/it isn't valid.
+											if(!this.valid_env(xloc, yloc + this.tile_side)) {
+												if(Math.random() * 5 < vines_added) {
+													if(Math.random() * 3 < 1) {
+														checks_until_vines += Math.floor(Math.random() * 4 + 1);
+													}
+													break;
+												}
+
+												this.make_noncolldiable(xloc, yloc + this.tile_side, 'c1')
+												xloc = xloc; 
+												yloc = yloc + this.tile_side;
+												vines_added++;
+											} else {
+												add_vines = false
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
+			place_plants() {
 				// Handle grasses and trees
 				for(let i = 0; i < this.surface_line.length; ++i) {
 					let xpos = this.surface_line[i].x;
