@@ -212,14 +212,14 @@
 				this.player.scale.setTo(.5, .5);
 				this.player.anchor.setTo(.5, .5);
 				this.player.enableBody = true;
-        this.player.body.gravity.y = 2200;
-        this.player.body.collideWorldBounds = true;
-        this.player.body.allowRotation = false;
-        this.player.body.friction.setTo(0, 0);
+				this.player.body.gravity.y = 2200;
+				this.player.body.collideWorldBounds = true;
+				this.player.body.allowRotation = false;
+				this.player.body.friction.setTo(0, 0);
 			}
 
 			change(a, b) {
-			    console.log("WEH");
+					console.log("WEH");
 			}
 
 			// Called once per loop.
@@ -270,7 +270,7 @@
 			// Generates a world, with no holes.
 			generic_generate() {
 				let last = 0;
-				let init_height = Math.floor(game.height / 1.5) - (game.height / 1.5 % this.tile_side);
+				let init_height = Math.floor(game.height / 1.5) - Math.floor((game.height / 1.5 % this.tile_side));
 				for(let i = -this.tile_side; i < game.width + this.tile_side * 2; i += this.tile_side) {
 
 					// Handle initial placement
@@ -290,9 +290,9 @@
 
 			recalculate_surface() {
 				this.surface_line = [];
-				let y_init = (Math.floor(game.height / 1.5) - (game.height / 1.5 % this.tile_side)) 
+				let y_init = (Math.floor(game.height / 1.5) - Math.floor((game.height / 1.5 % this.tile_side))) 
 									 % this.tile_side;
-
+				console.log(y_init + " " + this.environment[0][0]);
 				for(let i = -this.tile_side; i < game.width + this.tile_side * 2; i += this.tile_side) { 
 					for(let j = y_init; j < game.height + this.tile_side * 2; j += this.tile_side) {
 						let should_exit_early = false;
@@ -390,6 +390,7 @@
 
 			place_plants() {
 				// Handle grasses and trees
+				console.log(this.surface_line.length);
 				for(let i = 0; i < this.surface_line.length; ++i) {
 					let xpos = this.surface_line[i].x;
 					let ypos = this.surface_line[i].y;
@@ -619,7 +620,7 @@
 					if(!this.player.body.touching.right)
 						this.player.body.velocity.x = 180;
 
-			  if(game.input.keyboard.isDown(Phaser.Keyboard.LEFT))
+				if(game.input.keyboard.isDown(Phaser.Keyboard.LEFT))
 					if(!this.player.body.touching.left)
 						this.player.body.velocity.x = -1000;
 
