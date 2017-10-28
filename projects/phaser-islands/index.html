@@ -271,6 +271,7 @@
 			generic_generate() {
 				let last = 0;
 				let init_height = Math.floor(game.height / 1.5) - Math.floor((game.height / 1.5 % this.tile_side));
+				
 				for(let i = -this.tile_side; i < game.width + this.tile_side * 2; i += this.tile_side) {
 
 					// Handle initial placement
@@ -292,7 +293,7 @@
 				this.surface_line = [];
 				let y_init = (Math.floor(game.height / 1.5) - Math.floor((game.height / 1.5 % this.tile_side))) 
 									 % this.tile_side;
-				console.log(y_init + " " + this.environment[0][0]);
+
 				for(let i = -this.tile_side; i < game.width + this.tile_side * 2; i += this.tile_side) { 
 					for(let j = y_init; j < game.height + this.tile_side * 2; j += this.tile_side) {
 						let should_exit_early = false;
