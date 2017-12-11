@@ -1,0 +1,188 @@
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Estimated Operating Cost</title>
+		<link rel="stylesheet" href="resources/css/bootstrap.min.css"></script>
+	</head>
+	<style>
+		body {
+			background-color: black;
+		}
+		.h1 {
+			margin-top: 15%;
+			font-size: 2.5em;
+		}
+		@media only screen and (max-width: 768px) {
+			.h1 {
+				font-size: 1.8em;
+				margin-top: 5%;
+			}
+		}
+		video { 
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			min-width: 100%;
+			min-height: 100%;
+			width: auto;
+			height: auto;
+			z-index: -100;
+			transform: translateX(-50%) translateY(-50%);
+			background-size: cover;  
+			transition: 2s opacity; 
+			background-color: black;
+			filter:blur(3px);
+		}
+
+		.m-centered {
+			/*filter:blur(2px);*/
+			margin-top: -1px;
+			text-align: center;
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			max-width: 600px;
+			min-width: 550px;
+			background-color: white;
+			min-height: 101%;
+			height: auto;
+			transform: translateX(-50%) translateY(-50%);
+			opacity: 0.725;
+		}
+		.m-content {
+			margin-left: auto;
+			margin-right: auto;
+			max-width: 350px;
+			min-width: 350px;
+			opacity: 2.0;
+		}
+		.m-shadow {
+    			box-shadow: 0px 2px 8px rgba(30, 30, 30, 0.25);
+    			border:none
+		}
+		.m-space {
+			margin-top: 12px;
+		}
+	</style>
+
+	<body>
+		<video autoplay muted loop poster poster="resources/techy.mp4" id="bgvid">
+			<source src="resources/techy.mp4" type="video/webm">
+			<source src="resources/techy.mp4" type="video/mp4">
+		</video>
+		<div class="m-centered">
+			<div class="container">
+				<p class="h1" >Estimate Operating Costs</p>
+				<em style="font-size: 1.05em;"> Change the fields to update estimates! </em><br>
+				<em style="font-size: .7em;"> Defaults are for 1-bulb lamp in North America </em>
+				<div class="m-content">
+					<hr/>
+					
+					<form id="costCalculator">
+					  <p class="h6">Cost of Electricity per kWh (cents): </p>
+					  <input id="i-cost" class="m-shadow" type="number" name="cost" value="12" min="0" autocomplete="off" onclick="this.select()"><br>
+					  <p class="h6 m-space">Item Wattage (volts * amps):</p>
+					  <input id="i-wattage"  class="m-shadow" type="number" name="wattage" value="60" min="0" autocomplete="off" step="5" onclick="this.select()"><br>
+					  <p class="h6 m-space">Daily Usage (hours):</p>
+					  <input id="i-hours"  class="m-shadow" type="number" name="hours" value="3" min="0" max="24" autocomplete="off" step="0.5" onclick="this.select()"><br>
+					</form> 
+ 					
+ 					<table class="table">
+					    <thead>
+					      <tr>
+					        <th>Time period</th>
+					        <th>Cost</th>
+					      </tr>
+					    </thead>
+					    <tbody>
+					      <tr>
+					        <td>Per Hour:</td>
+					        <td id="p-hour">$?</td>
+					      </tr>
+					      <tr>
+					        <td>Per Day:</td>
+					        <td id="p-day">$?</td>
+					      </tr>
+					      <tr>
+					        <td>Per Week:</td>
+					        <td id="p-week">$?</td>
+					      </tr>
+					      <tr>
+					        <td>Per Month:</td>
+					        <td id="p-month">$?</td>
+					      </tr>
+					      <tr>
+					        <td>Per Year:</td>
+					        <td id="p-year">$?</td>
+					      </tr>
+					    </tbody>
+					  </table>
+
+<!--
+					  <table class="table">
+					    <thead>
+					      <tr>
+					        <th>Item</th>
+					        <th>Watts</th>
+					        <th>Hours/Day</th>
+					      </tr>
+					    </thead>
+					    <tbody>
+					      <tr>
+					        <td>Incandescent Lamp</td>
+					        <td>60w</td>
+					        <td>3-5 hrs</td>
+					      </tr>
+					      <tr>
+					        <td>TV</td>
+					        <td>120w</td>
+					        <td>2-4 hrs</td>
+					      </tr>
+					      <tr>
+					        <td>Cellphone Charging</td>
+					        <td>7.5w</td>
+					        <td>2 hrs</td>
+					      </tr>
+					    </tbody>
+					  </table>
+					  
+-->
+					<hr/>
+				</div>
+			</div>
+		</div>
+
+
+		<script type="text/javascript">
+			function updateValues() {
+				let cost = document.getElementById("i-cost").value;
+				let watts = document.getElementById("i-wattage").value;
+				let hrs = document.getElementById("i-hours").value;
+
+				let perDay = ( (watts / 1000.0 * hrs) ) * (cost / 100.0);
+				document.getElementById("p-day").innerHTML = "$" + (perDay).toFixed(3);
+				document.getElementById("p-week").innerHTML = "$" + (perDay * 7).toFixed(3);
+				document.getElementById("p-month").innerHTML  = "$" + (perDay * 30).toFixed(3);
+				document.getElementById("p-year").innerHTML  = "$" + (perDay * 365).toFixed(3);
+				
+				// Last so if it errors we're still good.
+				if(hrs == 0)
+					document.getElementById("p-hour").innerHTML = "$0.000";
+				else
+					document.getElementById("p-hour").innerHTML = "$" + (perDay / hrs).toFixed(3);
+			}
+
+			let form = document.getElementById("costCalculator");
+			form.addEventListener("input", function () {
+				    updateValues();
+			});
+
+			document.onload = updateValues();
+		</script>
+
+		<script src="resources/css/jquery-3.2.1.slim.min.js"></script>
+		<script src="resources/css/popper.min.js"></script>
+		<script src="resources/js/bootstrap.min.js"></script>
+	</body>
+</html>
+
