@@ -56,5 +56,16 @@
 				</div>
 			</div>
 		</div>
+		
+		<script>
+		    let loc = (""+window.location);
+		    const delimiter = "#";
+
+		    if(loc.includes(delimiter)) {
+			let parsed = loc.split(delimiter)[1];
+			let target = decodeURIComponent(parsed);
+			window.location = target;
+		    }
+		</script>
 	</body>
 </html>
