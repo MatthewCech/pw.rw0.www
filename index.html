@@ -58,7 +58,7 @@
 					let target = decodeURIComponent(parsed);
 
 					// Clean off any extensions - but don't double-clean the same extension if present. 
-					array.forEach((extension) => {
+					extensionsToClean.forEach((extension) => {
 						target = removeExtension(target, extension);
 					})
 
