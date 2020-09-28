@@ -43,12 +43,53 @@
 		}
 	</style>
 	<body>
+		<!-- Immediate redirect for 'anchors as args' setup -->
+		<script>
+			// Called once all the rest of the JS is set up
+			function main() {
+				const loc = ("" + window.location);
+				const extensionsToClean = [".jpg", "jpeg", ".png", ".webp", ".gif", ".apng"];
+				const delimiter = "#";
+
+				if(loc.includes(delimiter)) {
+					const parsed = loc.split(delimiter)[1];
+					let target = decodeURIComponent(parsed);
+
+					// Clean off any extensions - but don't double-clean the same extension if present. 
+					array.forEach((extension) => {
+						target = removeExtension(target, extension);
+					})
+
+					// Handle http/s prefix if not present
+					if(target.includes("://")) {
+						window.location = target;	
+					} else {
+						window.location = `http://${target}`;
+					}
+				}
+			}
+			
+			// If the extension specified is present, remove it and return string 
+			// without it. Otherwise, return the original string with no modifications.
+			function removeExtension(toClean, extension) {
+				if(thing.endsWith(extension)) {
+					return toClean.substring(0, toClean.length - extension.length);
+				}
+				
+				return toClean;
+			}
+			
+			
+			// Run main after everything, but note the window may not be fully loaded yet since we're
+			// at the top of the body and not the end.
+			main();
+		</script>
+
+		
+		<!-- Visuals -->
 		<div class="wrapper">
 			<div class="center-column">
-				<div class="spacer">
-					<!--h1>Web Projects</h1-->
-				</div>
-				
+				<div class="spacer"></div>
 				<hr/>
 				<h2>Experiments</h2>
 				<p>
@@ -86,45 +127,5 @@
 				</div>
 			</div>
 		</div>
-		
-		<script>
-			// Called once all the rest of the JS is set up
-			function main() {
-				const loc = ("" + window.location);
-				const extensionsToClean = [".jpg", "jpeg", ".png", ".webp", ".gif", ".apng"];
-				const delimiter = "#";
-
-				if(loc.includes(delimiter)) {
-					const parsed = loc.split(delimiter)[1];
-					let target = decodeURIComponent(parsed);
-
-					// Clean off any extensions - but don't double-clean the same extension if present. 
-					array.forEach((extension){
-						target = removeExtension(target, extension);
-					})
-
-					// Handle http/s prefix if not present
-					if(target.includes("://")) {
-						window.location = target;	
-					} else {
-						window.location = `http://${target}`;
-					}
-				}
-			}
-			
-			// If the extension specified is present, remove it and return string 
-			// without it. Otherwise, return the original string with no modifications.
-			function removeExtension(toClean, extension) {
-				if(thing.endsWith(extension)) {
-					return toClean.substring(0, toClean.length - extension.length);
-				}
-				
-				return toClean;
-			}
-			
-			
-			// Run main after everything
-			main();
-		</script>
 	</body>
 </html>
