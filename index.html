@@ -12,20 +12,15 @@
 	</head>
 	<style>
 		body {
-		    background-color: #FFFFFF;
-		    background-image: url("/resources/assets/pw_maze_white.png");
-		    font-family: 'Open Sans', sans-serif;
+			background-color: #FFFFFF;
+			background-image: url("/resources/assets/pw_maze_white.png");
+			font-family: 'Open Sans', sans-serif;
 		}
-
-		h1 {
-		    font-family: 'Spectral', serif;
-		    font-size: 250%;
-		}
-
+		
 		h2 {
 			margin: 10px;
-		    font-family: 'Spectral', serif;
-		    font-size: 150%;
+			font-family: 'Spectral', serif;
+			font-size: 150%;
 		}
 
 		p {
@@ -78,14 +73,19 @@
 		</div>
 		
 		<script>
-		    let loc = (""+window.location);
-		    const delimiter = "#";
-
-		    if(loc.includes(delimiter)) {
-			let parsed = loc.split(delimiter)[1];
-			let target = decodeURIComponent(parsed);
-			window.location = target;
-		    }
+			let loc = (""+window.location);
+			const delimiter = "#";
+			
+			if(loc.includes(delimiter)) {
+				let parsed = loc.split(delimiter)[1];
+				let target = decodeURIComponent(parsed);
+				
+				if(target.includes("://")) {
+					window.location = target;	
+				} else {
+					window.location = `http://${target}`;
+				}
+			}
 		</script>
 	</body>
 </html>
