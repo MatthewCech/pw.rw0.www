@@ -88,19 +88,43 @@
 		</div>
 		
 		<script>
-			let loc = (""+window.location);
-			const delimiter = "#";
-			
-			if(loc.includes(delimiter)) {
-				let parsed = loc.split(delimiter)[1];
-				let target = decodeURIComponent(parsed);
-				
-				if(target.includes("://")) {
-					window.location = target;	
-				} else {
-					window.location = `http://${target}`;
+			// Called once all the rest of the JS is set up
+			function main() {
+				const loc = ("" + window.location);
+				const extensionsToClean = [".jpg", "jpeg", ".png", ".webp", ".gif", ".apng"];
+				const delimiter = "#";
+
+				if(loc.includes(delimiter)) {
+					const parsed = loc.split(delimiter)[1];
+					let target = decodeURIComponent(parsed);
+
+					// Clean off any extensions - but don't double-clean the same extension if present. 
+					array.forEach((extension){
+						target = removeExtension(target, extension);
+					})
+
+					// Handle http/s prefix if not present
+					if(target.includes("://")) {
+						window.location = target;	
+					} else {
+						window.location = `http://${target}`;
+					}
 				}
 			}
+			
+			// If the extension specified is present, remove it and return string 
+			// without it. Otherwise, return the original string with no modifications.
+			function removeExtension(toClean, extension) {
+				if(thing.endsWith(extension)) {
+					return toClean.substring(0, toClean.length - extension.length);
+				}
+				
+				return toClean;
+			}
+			
+			
+			// Run main after everything
+			main();
 		</script>
 	</body>
 </html>
