@@ -74,7 +74,7 @@
 			// If the extension specified is present, remove it and return string 
 			// without it. Otherwise, return the original string with no modifications.
 			function removeExtension(toClean, extension) {
-				if(thing.endsWith(extension)) {
+				if(toClean.endsWith(extension)) {
 					return toClean.substring(0, toClean.length - extension.length);
 				}
 				
